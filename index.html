@@ -45,6 +45,8 @@
   --work-text: #3040c0;
   --purple: #9b6ef5;
   --purple-bg: #f2eefe;
+  --holiday: #e74c3c;
+  --holiday-bg: #fff0f0;
   --radius: 16px;
   --radius-sm: 10px;
   --radius-xs: 6px;
@@ -156,6 +158,7 @@ body {
 }
 .chip.personal { background: var(--personal-bg); color: var(--personal-text); border-color: var(--personal-border); }
 .chip.work { background: var(--work-bg); color: var(--work-text); border-color: var(--work-border); }
+.chip.holiday { background: #fff0f0; color: #c0392b; border-color: #f5c0c0; }
 .chip.off { opacity: 0.3; }
 .chip-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .btn {
@@ -365,6 +368,7 @@ body {
 .ev:hover { opacity: 0.8; }
 .ev.personal { background: var(--personal-bg); color: var(--personal-text); border-left-color: var(--personal); }
 .ev.work { background: var(--work-bg); color: var(--work-text); border-left-color: var(--work); }
+.ev.holiday { background: #fff0f0; color: #c0392b; border-left-color: #e74c3c; }
 .ev-more { font-size: 10px; color: var(--text-hint); padding-left: 4px; font-weight: 500; }
 
 /* 주간 */
@@ -413,6 +417,7 @@ body {
 .week-ev:hover { opacity: 0.85; }
 .week-ev.personal { background: var(--personal-bg); color: var(--personal-text); border-left-color: var(--personal); }
 .week-ev.work { background: var(--work-bg); color: var(--work-text); border-left-color: var(--work); }
+.week-ev.holiday { background: #fff0f0; color: #c0392b; border-left-color: #e74c3c; }
 
 /* ── 모달 ── */
 .overlay {
@@ -694,29 +699,50 @@ function fetchCalendarEvents(type, token) {
   const now = new Date();
   const from = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
   const to = new Date(now.getFullYear(), now.getMonth() + 3, 0).toISOString();
-  fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${from}&timeMax=${to}&singleEvents=true&orderBy=startTime&maxResults=200`, {
-    headers: { Authorization: `Bearer ${token}` }
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (!data.items) return;
-    events = events.filter(e => e.source !== 'google' || e.account !== type);
-    data.items.forEach(item => {
+  const headers = { Authorization: `Bearer ${token}` };
+
+  function parseItems(items, calType) {
+    items.forEach(item => {
       const start = item.start?.dateTime || item.start?.date || '';
       const end = item.end?.dateTime || item.end?.date || '';
+      if (!start) return;
       events.push({
         id: newId(),
         title: item.summary || '(제목 없음)',
         date: start.split('T')[0],
         start: start.includes('T') ? start.split('T')[1].slice(0,5) : '00:00',
         end: end.includes('T') ? end.split('T')[1].slice(0,5) : '23:59',
-        account: type, memo: item.description || '',
-        source: 'google', googleId: item.id
+        account: calType,
+        memo: item.description || '',
+        source: 'google',
+        googleId: item.id
       });
     });
-    save(); render();
-  })
-  .catch(e => console.error('불러오기 실패:', e));
+  }
+
+  fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', { headers })
+    .then(r => r.json())
+    .then(async listData => {
+      if (!listData.items) return;
+      events = events.filter(e => e.source !== 'google' || (e.account !== type && e.account !== 'holiday'));
+
+      const fetchPromises = listData.items.map(cal => {
+        const calId = encodeURIComponent(cal.id);
+        const isHoliday = cal.id.includes('holiday') || (cal.summary || '').includes('공휴일');
+        const calType = isHoliday ? 'holiday' : type;
+        return fetch(
+          `https://www.googleapis.com/calendar/v3/calendars/${calId}/events?timeMin=${from}&timeMax=${to}&singleEvents=true&orderBy=startTime&maxResults=200`,
+          { headers }
+        )
+        .then(r => r.json())
+        .then(data => { if (data.items) parseItems(data.items, calType); })
+        .catch(() => {});
+      });
+
+      await Promise.all(fetchPromises);
+      save(); render();
+    })
+    .catch(e => console.error('캘린더 목록 불러오기 실패:', e));
 }
 
 function showApp() {
@@ -727,7 +753,7 @@ function showApp() {
 
 if (accounts.length > 0) showApp();
 
-function visibleEvents() { return events.filter(e => activeAccounts.includes(e.account)); }
+function visibleEvents() { return events.filter(e => activeAccounts.includes(e.account) || e.account === 'holiday'); }
 
 function navigate(dir) {
   if (currentView === 'month') current.setMonth(current.getMonth() + dir);
@@ -749,11 +775,14 @@ function render() {
 }
 
 function renderChips() {
-  document.getElementById('chips').innerHTML = [
+  const hasHoliday = events.some(e => e.account === 'holiday');
+  const types = [
     { id: 'personal', label: '개인' },
-    { id: 'work', label: '업무' }
-  ].map(t => `
-    <div class="chip ${t.id} ${activeAccounts.includes(t.id) ? '' : 'off'}" onclick="toggleAccount('${t.id}')">
+    { id: 'work', label: '업무' },
+    ...(hasHoliday ? [{ id: 'holiday', label: '공휴일' }] : [])
+  ];
+  document.getElementById('chips').innerHTML = types.map(t => `
+    <div class="chip ${t.id} ${activeAccounts.includes(t.id) || t.id === 'holiday' ? '' : 'off'}" onclick="${t.id !== 'holiday' ? `toggleAccount('${t.id}')` : ''}">
       <span class="chip-dot"></span>${t.label}
     </div>`).join('');
 }
