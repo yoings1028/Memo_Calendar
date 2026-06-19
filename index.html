@@ -592,11 +592,56 @@ body {
 .detail-ev-card:hover { border-color: var(--accent); background: var(--accent-light); }
 
 @media (max-width: 640px) {
+  /* 사이드바 숨기기 */
   .sidebar { display: none; }
-  .period-label { min-width: auto; font-size: 13px; }
-  .cal-area { padding: 10px; }
-  .month-cell { min-height: 60px; padding: 4px 3px; }
-  .week-dn { font-size: 15px; width: 28px; height: 28px; }
+
+  /* 상단 바 2줄 구조로 */
+  .topbar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 10px 12px 6px;
+    gap: 6px;
+  }
+  .app-title { font-size: 14px; }
+  .app-logo-icon { width: 24px; height: 24px; font-size: 12px; }
+
+  /* 계정 칩 + 버튼을 두번째 줄로 */
+  .topbar-right {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .account-chips { flex-shrink: 0; display: flex; gap: 4px; }
+  .chip { padding: 4px 8px; font-size: 11px; }
+  .btn.sm { padding: 5px 10px; font-size: 11px; white-space: nowrap; }
+  .profile-btn { width: 30px; height: 30px; flex-shrink: 0; }
+
+  /* 툴바 */
+  .toolbar { padding: 7px 10px; gap: 6px; flex-wrap: wrap; }
+  .period-label { min-width: auto; font-size: 13px; font-weight: 600; }
+  .nav-btn { width: 28px; height: 28px; font-size: 14px; }
+  .view-seg button { padding: 4px 10px; font-size: 11px; }
+
+  /* 캘린더 영역 */
+  .cal-area { padding: 6px; }
+  .month-wrap { min-height: calc(100vh - 160px); }
+  .month-week { min-height: 80px; }
+  .month-head-cell { font-size: 10px; padding: 6px 2px; }
+  .day-n { font-size: 11px; width: 20px; height: 20px; }
+  .ev-slot { font-size: 10px; padding: 1px 4px; margin: 1px; }
+  .ev-slot-label { }
+
+  /* 주간 뷰 */
+  .week-wrap { height: calc(100vh - 160px); }
+  .week-dn { font-size: 14px; width: 26px; height: 26px; }
+  .week-wd { font-size: 9px; }
+  .week-head { grid-template-columns: 36px repeat(7,1fr); }
+  .week-body { grid-template-columns: 36px repeat(7,1fr); }
+  .time-slot { font-size: 9px; padding-right: 3px; }
+  .week-ev { font-size: 9px; padding: 1px 3px; }
 }
 </style>
 </head>
