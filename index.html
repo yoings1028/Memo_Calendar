@@ -373,28 +373,47 @@ body {
 }
 .ev-slot {
   font-size: 11px; font-weight: 600;
-  padding: 2px 6px;
-  border-radius: var(--radius-xs);
+  padding: 2px 7px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   cursor: pointer; transition: opacity 0.12s;
   margin: 1px 2px; min-width: 0;
+  border-radius: var(--radius-xs);
+  border-left: 3px solid transparent;
 }
 .ev-slot:hover { opacity: 0.8; }
-.ev-slot.personal { background: var(--personal-bg); color: var(--personal-text); border-left: 3px solid var(--personal); }
-.ev-slot.work { background: var(--work-bg); color: var(--work-text); border-left: 3px solid var(--work); }
-.ev-slot.holiday { background: #fff0f0; color: #c0392b; border-left: 3px solid #e74c3c; }
+
+/* 단일 일정 */
+.ev-slot.personal { background: var(--personal-bg); color: var(--personal-text); border-left-color: var(--personal); }
+.ev-slot.work { background: var(--work-bg); color: var(--work-text); border-left-color: var(--work); }
+.ev-slot.holiday { background: #fff0f0; color: #c0392b; border-left-color: #e74c3c; }
+
+/* 이어진 일정 - 시작 (왼쪽 둥글, 오른쪽 직각, 오른쪽 마진 없음) */
 .ev-slot.multi-start { border-radius: var(--radius-xs) 0 0 var(--radius-xs); margin-right: 0; }
-.ev-slot.multi-start.personal { background: #c0dd97; border-left-color: var(--personal); }
-.ev-slot.multi-start.work { background: #b5d4f4; border-left-color: var(--work); }
-.ev-slot.multi-start.holiday { background: #f5c0c0; border-left-color: #e74c3c; }
+.ev-slot.multi-start.personal { background: #c0dd97; color: var(--personal-text); border-left-color: var(--personal); }
+.ev-slot.multi-start.work { background: #b5d4f4; color: var(--work-text); border-left-color: var(--work); }
+.ev-slot.multi-start.holiday { background: #f5c0c0; color: #c0392b; border-left-color: #e74c3c; }
+
+/* 이어진 일정 - 전체(이 주 안에서 시작+끝) */
+.ev-slot.multi-full { border-radius: var(--radius-xs); }
+.ev-slot.multi-full.personal { background: #c0dd97; color: var(--personal-text); border-left-color: var(--personal); }
+.ev-slot.multi-full.work { background: #b5d4f4; color: var(--work-text); border-left-color: var(--work); }
+.ev-slot.multi-full.holiday { background: #f5c0c0; color: #c0392b; border-left-color: #e74c3c; }
+
+/* 이어진 일정 - 중간 (양쪽 직각, 마진 없음) */
 .ev-slot.multi-cont { border-radius: 0; margin-left: 0; margin-right: 0; border-left: none; }
-.ev-slot.multi-cont.personal { background: #c0dd97; }
-.ev-slot.multi-cont.work { background: #b5d4f4; }
-.ev-slot.multi-cont.holiday { background: #f5c0c0; }
-.ev-slot.multi-end-r { border-radius: 0 var(--radius-xs) var(--radius-xs) 0; margin-right: 2px; }
-.ev-slot.multi-no-end { border-radius: 0; margin-right: 0; }
+.ev-slot.multi-cont.personal { background: #c0dd97; color: var(--personal-text); }
+.ev-slot.multi-cont.work { background: #b5d4f4; color: var(--work-text); }
+.ev-slot.multi-cont.holiday { background: #f5c0c0; color: #c0392b; }
+
+/* 이어진 일정 - 끝 (왼쪽 직각, 오른쪽 둥글) */
+.ev-slot.multi-end-week { border-radius: 0 var(--radius-xs) var(--radius-xs) 0; margin-left: 0; border-left: none; }
+.ev-slot.multi-end-week.personal { background: #c0dd97; color: var(--personal-text); }
+.ev-slot.multi-end-week.work { background: #b5d4f4; color: var(--work-text); }
+.ev-slot.multi-end-week.holiday { background: #f5c0c0; color: #c0392b; }
+
 .ev-slot-label { pointer-events: none; }
 .ev-slot-empty { min-height: 20px; cursor: pointer; }
+.ev-more-cell { font-size: 10px; color: var(--text-hint); padding: 1px 6px; }
 
 /* 주간 */
 .week-wrap {
@@ -1051,30 +1070,34 @@ function renderMonth() {
     weeks.push(week);
   }
 
-  // 이벤트를 행(row) 슬롯에 배치하는 함수
+  // 이벤트를 슬롯 행에 배치
   function layoutWeekEvents(weekDates) {
-    const slots = []; // slots[row][dayIndex] = event or null
+    const slots = [];
     const validDates = weekDates.map(w => w.date).filter(Boolean);
     if (!validDates.length) return slots;
     const weekStart = validDates[0];
     const weekEnd = validDates[validDates.length - 1];
 
-    // 이 주에 걸치는 이벤트 수집
     const weekEvs = evs.filter(e => {
       const eStart = e.date;
       const eEnd = e.endDate || e.date;
       return eStart <= weekEnd && eEnd >= weekStart;
     });
 
-    // 각 이벤트를 슬롯에 배치
+    // 긴 이벤트 먼저 배치 (안정적인 슬롯 확보)
+    weekEvs.sort((a, b) => {
+      const aLen = (new Date(a.endDate||a.date) - new Date(a.date));
+      const bLen = (new Date(b.endDate||b.date) - new Date(b.date));
+      return bLen - aLen;
+    });
+
     weekEvs.forEach(ev => {
       const eStart = ev.date < weekStart ? weekStart : ev.date;
       const eEnd = (ev.endDate || ev.date) > weekEnd ? weekEnd : (ev.endDate || ev.date);
       const startIdx = weekDates.findIndex(w => w.date === eStart);
       const endIdx = weekDates.findIndex(w => w.date === eEnd);
-      if (startIdx === -1) return;
+      if (startIdx === -1 || endIdx === -1) return;
 
-      // 빈 슬롯 행 찾기
       let row = 0;
       while (true) {
         if (!slots[row]) slots[row] = new Array(7).fill(null);
@@ -1089,32 +1112,31 @@ function renderMonth() {
           break;
         }
         row++;
+        if (row > 10) break;
       }
     });
     return slots;
   }
 
   const head = DAYS.map(d => `<div class="month-head-cell">${d}</div>`).join('');
+  const SHOW_ROWS = 3;
 
   let weeksHtml = '';
   weeks.forEach(weekDates => {
     const slots = layoutWeekEvents(weekDates);
-    const maxSlots = Math.max(slots.length, 0);
+    const maxSlots = slots.length;
 
-    // 날짜 행
+    // 날짜 숫자 행
     let dayRow = '<div class="month-row-dates">';
     weekDates.forEach(({ date, d }) => {
       const isToday = date === todayStr;
       const isOther = !date;
-      dayRow += `<div class="month-cell-date ${isOther ? 'other' : ''} ${isToday ? 'today' : ''}" onclick="${date ? `openDayDetail('${date}')` : ''}">
-        <div class="day-n">${d}</div>
-      </div>`;
+      dayRow += `<div class="month-cell-date ${isOther?'other':''} ${isToday?'today':''}" onclick="${date?`openDayDetail('${date}')`:''}"><div class="day-n">${d}</div></div>`;
     });
     dayRow += '</div>';
 
     // 이벤트 슬롯 행들
     let evRows = '';
-    const SHOW_ROWS = 3;
     for (let row = 0; row < Math.min(maxSlots, SHOW_ROWS); row++) {
       evRows += '<div class="month-row-evs">';
       let i = 0;
@@ -1122,42 +1144,44 @@ function renderMonth() {
         const cell = slots[row] ? slots[row][i] : null;
         if (cell && cell.isStart) {
           const e = cell.ev;
-          const multi = isMultiDay(e);
-          const isFirst = e.date >= (weekDates.find(w=>w.date)?.date || '');
-          const isLast = (e.endDate || e.date) <= (weekDates[6].date || '9999');
+          const span = cell.span;
+          const multi = span > 1;
+          // 이 주에서 이벤트가 시작되는지 (이전 주에서 넘어온건지)
+          const startsThisWeek = e.date === weekDates[i].date;
+          // 이 주에서 이벤트가 끝나는지 (다음 주로 넘어가는지)
+          const endsThisWeek = (e.endDate || e.date) === weekDates[i + span - 1]?.date;
+
           let cls = `ev-slot ${e.account}`;
           if (multi) {
-            if (isFirst && e.date === cell.ev.date) cls += ' multi-start';
+            if (startsThisWeek && endsThisWeek) cls += ' multi-full';
+            else if (startsThisWeek) cls += ' multi-start';
+            else if (endsThisWeek) cls += ' multi-end-week';
             else cls += ' multi-cont';
-            if (!isLast || (e.endDate || e.date) > weekDates[6].date) cls += ' multi-no-end';
-            else cls += ' multi-end-r';
           }
-          const span = cell.span;
+
           evRows += `<div class="${cls}" style="grid-column: span ${span};" onclick="showEventDetail(${e.id})" title="${e.title}">
-            <span class="ev-slot-label">${(multi && !isFirst) ? '' : e.title}</span>
+            <span class="ev-slot-label">${startsThisWeek ? e.title : ''}</span>
           </div>`;
           i += span;
         } else if (cell && !cell.isStart) {
           i++;
         } else {
-          evRows += `<div class="ev-slot-empty" onclick="${weekDates[i].date ? `openDayDetail('${weekDates[i].date}')` : ''}"></div>`;
+          const date = weekDates[i]?.date;
+          evRows += `<div class="ev-slot-empty" onclick="${date?`openDayDetail('${date}')`:''}"></div>`;
           i++;
         }
       }
       evRows += '</div>';
     }
 
-    // 넘치는 이벤트 표시
+    // +N개 더 행
     if (maxSlots > SHOW_ROWS) {
       let moreRow = '<div class="month-row-evs">';
       weekDates.forEach(({ date }) => {
         if (!date) { moreRow += '<div class="ev-slot-empty"></div>'; return; }
-        const dayEvCount = evs.filter(e => {
-          const eEnd = e.endDate || e.date;
-          return e.date <= date && eEnd >= date;
-        }).length;
-        const hidden = dayEvCount - SHOW_ROWS;
-        moreRow += `<div class="ev-slot-empty" style="font-size:10px;color:var(--text-hint);padding:1px 6px;cursor:pointer" onclick="openDayDetail('${date}')">${hidden > 0 ? `+${hidden}개` : ''}</div>`;
+        const cnt = evs.filter(e => { const end = e.endDate||e.date; return e.date<=date && end>=date; }).length;
+        const hidden = cnt - SHOW_ROWS;
+        moreRow += `<div class="ev-slot-empty ev-more-cell" onclick="openDayDetail('${date}')">${hidden>0?`+${hidden}개`:''}</div>`;
       });
       moreRow += '</div>';
       evRows += moreRow;
