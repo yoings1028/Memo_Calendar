@@ -474,6 +474,60 @@ body {
 .btn-danger:hover { background: #ffe8e8; border-color: #e05555; color: #e05555; }
 
 .empty { text-align: center; padding: 24px 12px; color: var(--text-hint); font-size: 12px; }
+
+.profile-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--accent-light);
+  border: 1.5px solid var(--border);
+  color: var(--accent);
+  font-size: 14px;
+  font-family: 'ONE-Mobile-Title', sans-serif;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: normal;
+  transition: all 0.15s;
+  position: relative;
+  flex-shrink: 0;
+}
+.profile-btn:hover { border-color: var(--accent); background: var(--accent); color: #fff; }
+.profile-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  min-width: 200px;
+  z-index: 300;
+  overflow: hidden;
+  display: none;
+}
+.profile-menu.open { display: block; }
+.profile-menu-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.profile-menu-header .label { font-size: 10px; color: var(--text-hint); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+.profile-menu-header .email { font-size: 12px; color: var(--text-sub); }
+.profile-menu-item {
+  padding: 10px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  color: var(--text);
+  transition: background 0.12s;
+  border: none; background: none; width: 100%;
+  font-family: 'ONE-Mobile-Title', sans-serif;
+  text-align: left;
+}
+.profile-menu-item:hover { background: var(--surface2); }
+.profile-menu-item.danger { color: #c0392b; }
+.profile-menu-item.danger:hover { background: #fff5f5; }
+.profile-menu-divider { height: 1px; background: var(--border); margin: 2px 0; }
+.profile-wrap { position: relative; }
 .loading { text-align: center; padding: 40px; color: var(--text-sub); font-size: 13px; }
 
 /* 상세 모달 이벤트 카드 */
@@ -526,6 +580,16 @@ body {
     <div class="topbar-right">
       <button class="btn sm" onclick="openMemoModal(null)">✏️ 메모</button>
       <button class="btn sm primary" onclick="openEventModal()">+ 일정 추가</button>
+      <div class="profile-wrap">
+        <button class="profile-btn" id="profile-btn" onclick="toggleProfileMenu()">👤</button>
+        <div class="profile-menu" id="profile-menu">
+          <div id="profile-menu-accounts"></div>
+          <div class="profile-menu-divider"></div>
+          <button class="profile-menu-item" onclick="addAccount()">➕ 계정 추가</button>
+          <div class="profile-menu-divider"></div>
+          <button class="profile-menu-item danger" onclick="logoutAll()">🚪 전체 로그아웃</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -744,6 +808,66 @@ function fetchCalendarEvents(type, token) {
     })
     .catch(e => console.error('캘린더 목록 불러오기 실패:', e));
 }
+
+function toggleProfileMenu() {
+  const menu = document.getElementById('profile-menu');
+  menu.classList.toggle('open');
+  updateProfileMenu();
+}
+
+function updateProfileMenu() {
+  const labels = { personal: '개인', work: '업무' };
+  const colors = { personal: 'var(--personal)', work: 'var(--work)' };
+  const el = document.getElementById('profile-menu-accounts');
+  if (!accounts.length) {
+    el.innerHTML = '<div class="profile-menu-item" style="color:var(--text-hint);cursor:default">연동된 계정 없음</div>';
+    return;
+  }
+  el.innerHTML = accounts.map(a => `
+    <div class="profile-menu-header">
+      <div class="label">${labels[a.type] || a.type} 계정</div>
+      <div class="email">${a.email}</div>
+    </div>
+    <button class="profile-menu-item danger" onclick="logoutAccount('${a.type}')">
+      <span style="width:8px;height:8px;border-radius:50%;background:${colors[a.type]};display:inline-block"></span>
+      ${labels[a.type]} 계정 로그아웃
+    </button>`).join('<div class="profile-menu-divider"></div>');
+}
+
+function logoutAccount(type) {
+  if (!confirm(`${type === 'personal' ? '개인' : '업무'} 계정을 로그아웃할까요?`)) return;
+  accounts = accounts.filter(a => a.type !== type);
+  events = events.filter(e => e.account !== type && !(e.source === 'google' && e.account === type));
+  activeAccounts = activeAccounts.filter(a => a !== type);
+  if (!activeAccounts.length) activeAccounts = ['personal', 'work'];
+  save();
+  closeProfileMenu();
+  if (!accounts.length) {
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+  } else {
+    render();
+  }
+}
+
+function logoutAll() {
+  if (!confirm('모든 계정에서 로그아웃할까요?')) return;
+  accounts = []; events = []; memos = [];
+  activeAccounts = ['personal', 'work'];
+  save();
+  closeProfileMenu();
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function closeProfileMenu() {
+  document.getElementById('profile-menu').classList.remove('open');
+}
+
+document.addEventListener('click', e => {
+  const wrap = document.querySelector('.profile-wrap');
+  if (wrap && !wrap.contains(e.target)) closeProfileMenu();
+});
 
 function showApp() {
   document.getElementById('login-screen').style.display = 'none';
