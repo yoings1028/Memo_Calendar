@@ -324,19 +324,28 @@ body {
   box-shadow: var(--shadow);
   overflow: hidden;
   border: 1.5px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 140px);
 }
 .month-head { display: grid; grid-template-columns: repeat(7,1fr); background: var(--surface2); border-bottom: 1.5px solid var(--border); }
 .month-head-cell { text-align: center; font-size: 11px; font-weight: 700; color: var(--text-sub); padding: 10px 4px; letter-spacing: 0.5px; }
-.month-weeks { display: flex; flex-direction: column; }
-.month-week { border-bottom: 1px solid var(--border); }
-.month-row-dates { display: grid; grid-template-columns: repeat(7, 1fr); }
+.month-weeks { display: flex; flex-direction: column; flex: 1; }
+.month-week {
+  border-bottom: 1px solid var(--border);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 120px;
+}
+.month-row-dates { display: grid; grid-template-columns: repeat(7, 1fr); flex-shrink: 0; }
 .month-cell-date {
   border-right: 1px solid var(--border);
   padding: 6px 6px 2px;
   cursor: pointer;
   background: var(--surface);
   transition: background 0.1s;
-  min-height: 28px;
+  min-height: 32px;
 }
 .month-cell-date:last-child { border-right: none; }
 .month-cell-date:hover { background: var(--bg); }
@@ -358,8 +367,9 @@ body {
 .month-row-evs {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  min-height: 22px;
+  min-height: 24px;
   padding: 0 2px 2px;
+  flex-shrink: 0;
 }
 .ev-slot {
   font-size: 11px; font-weight: 600;
@@ -1236,28 +1246,117 @@ function openEventModalAt(date, time) {
   document.getElementById('ev-end').value = `${pad(Math.min(h+1,23))}:00`;
 }
 
-function saveEvent() {
+async function saveEvent() {
   const title = document.getElementById('ev-title').value.trim();
   if (!title) { alert('제목을 입력하세요'); return; }
   const endDateVal = document.getElementById('ev-enddate').value;
+  const account = document.getElementById('ev-account').value;
   const ev = {
     id: editingEventId || newId(),
     title, date: document.getElementById('ev-date').value,
     endDate: endDateVal || document.getElementById('ev-date').value,
     start: document.getElementById('ev-start').value,
     end: document.getElementById('ev-end').value,
-    account: document.getElementById('ev-account').value,
-    memo: document.getElementById('ev-memo').value, source: 'local'
+    account,
+    memo: document.getElementById('ev-memo').value,
+    source: 'google'
   };
-  if (editingEventId) events = events.map(e => e.id === editingEventId ? ev : e);
-  else events.push(ev);
-  save(); closeModal('event-overlay'); render();
+
+  closeModal('event-overlay');
+
+  if (editingEventId) {
+    // 수정
+    const existing = events.find(e => e.id === editingEventId);
+    ev.googleId = existing?.googleId;
+    events = events.map(e => e.id === editingEventId ? ev : e);
+    save(); render();
+    await updateToGoogle(ev);
+  } else {
+    // 신규: 로컬에 먼저 저장 후 구글에 업로드
+    events.push(ev);
+    save(); render();
+    const googleId = await saveToGoogle(ev);
+    if (googleId) {
+      ev.googleId = googleId;
+      events = events.map(e => e.id === ev.id ? ev : e);
+      save();
+    }
+  }
 }
 
-function deleteCurrentEvent() {
+// 계정 토큰 가져오기
+function getToken(accountType) {
+  const acc = accounts.find(a => a.type === accountType);
+  return acc ? acc.token : null;
+}
+
+// 구글 캘린더에 일정 저장 (신규)
+async function saveToGoogle(ev) {
+  const token = getToken(ev.account);
+  if (!token) return null;
+  const body = buildGoogleEventBody(ev);
+  const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) { console.error('구글 저장 실패', await res.text()); return null; }
+  const data = await res.json();
+  return data.id;
+}
+
+// 구글 캘린더 일정 수정
+async function updateToGoogle(ev) {
+  const token = getToken(ev.account);
+  if (!token || !ev.googleId) return;
+  const body = buildGoogleEventBody(ev);
+  const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${ev.googleId}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) console.error('구글 수정 실패', await res.text());
+}
+
+// 구글 캘린더 일정 삭제
+async function deleteFromGoogle(ev) {
+  const token = getToken(ev.account);
+  if (!token || !ev.googleId) return;
+  await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${ev.googleId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
+
+// 구글 API 요청 바디 생성
+function buildGoogleEventBody(ev) {
+  const isAllDay = ev.start === '00:00' && ev.end === '23:59';
+  const endDate = ev.endDate || ev.date;
+  if (isAllDay) {
+    // 종일 이벤트: 구글은 end를 다음날로
+    const nextDay = new Date(endDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+    return {
+      summary: ev.title,
+      description: ev.memo || '',
+      start: { date: ev.date },
+      end: { date: nextDay.toISOString().split('T')[0] }
+    };
+  }
+  return {
+    summary: ev.title,
+    description: ev.memo || '',
+    start: { dateTime: `${ev.date}T${ev.start}:00`, timeZone: 'Asia/Seoul' },
+    end: { dateTime: `${endDate}T${ev.end}:00`, timeZone: 'Asia/Seoul' }
+  };
+}
+
+async function deleteCurrentEvent() {
   if (!editingEventId || !confirm('일정을 삭제할까요?')) return;
+  const ev = events.find(e => e.id === editingEventId);
   events = events.filter(e => e.id !== editingEventId);
   save(); closeModal('event-overlay'); render();
+  if (ev) await deleteFromGoogle(ev);
 }
 
 function showEventDetail(id) {
@@ -1295,10 +1394,12 @@ function editEvent(id) {
   openModal('event-overlay');
 }
 
-function deleteEventById(id) {
+async function deleteEventById(id) {
   if (!confirm('일정을 삭제할까요?')) return;
+  const ev = events.find(e => e.id === id);
   events = events.filter(e => e.id !== id);
   save(); closeModal('detail-overlay'); render();
+  if (ev) await deleteFromGoogle(ev);
 }
 
 function openDayDetail(ds) {
