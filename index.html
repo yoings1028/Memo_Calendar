@@ -369,6 +369,12 @@ body {
 .ev.personal { background: var(--personal-bg); color: var(--personal-text); border-left-color: var(--personal); }
 .ev.work { background: var(--work-bg); color: var(--work-text); border-left-color: var(--work); }
 .ev.holiday { background: #fff0f0; color: #c0392b; border-left-color: #e74c3c; }
+
+/* 이어진 이벤트 스타일 */
+.ev.multi-start { border-radius: var(--radius-xs) 0 0 var(--radius-xs); margin-right: -6px; padding-right: 4px; }
+.ev.multi-mid { border-radius: 0; margin-right: -6px; margin-left: -1px; padding-left: 4px; padding-right: 4px; border-left: none; opacity: 0.88; }
+.ev.multi-end { border-radius: 0 var(--radius-xs) var(--radius-xs) 0; margin-left: -1px; padding-left: 4px; border-left: none; opacity: 0.88; }
+.ev.multi-mid .ev-label, .ev.multi-end .ev-label { visibility: hidden; }
 .ev-more { font-size: 10px; color: var(--text-hint); padding-left: 4px; font-weight: 500; }
 
 /* 주간 */
@@ -654,7 +660,14 @@ body {
       <button class="close-btn" onclick="closeModal('event-overlay')">×</button>
     </div>
     <div class="field"><label>제목</label><input type="text" id="ev-title" placeholder="일정 제목을 입력하세요"></div>
-    <div class="field"><label>날짜</label><input type="date" id="ev-date"></div>
+    <div class="field">
+      <label>날짜</label>
+      <div class="time-row">
+        <input type="date" id="ev-date">
+        <input type="date" id="ev-enddate">
+      </div>
+      <div style="display:flex;gap:6px;margin-top:5px;font-size:11px;color:var(--text-hint)"><span>시작일</span><span style="margin-left:auto">종료일 (선택)</span></div>
+    </div>
     <div class="field"><label>시간</label>
       <div class="time-row">
         <input type="time" id="ev-start" value="09:00">
@@ -780,10 +793,19 @@ function fetchCalendarEvents(type, token) {
       const start = item.start?.dateTime || item.start?.date || '';
       const end = item.end?.dateTime || item.end?.date || '';
       if (!start) return;
+      const startDate = start.split('T')[0];
+      // 구글 종일 이벤트의 end는 마지막날 다음날이므로 -1일 처리
+      let endDate = end.split('T')[0];
+      if (!end.includes('T') && endDate > startDate) {
+        const d = new Date(endDate);
+        d.setDate(d.getDate() - 1);
+        endDate = d.toISOString().split('T')[0];
+      }
       events.push({
         id: newId(),
         title: item.summary || '(제목 없음)',
-        date: start.split('T')[0],
+        date: startDate,
+        endDate: endDate,
         start: start.includes('T') ? start.split('T')[1].slice(0,5) : '00:00',
         end: end.includes('T') ? end.split('T')[1].slice(0,5) : '23:59',
         account: calType,
@@ -889,6 +911,20 @@ if (accounts.length > 0) showApp();
 
 function visibleEvents() { return events.filter(e => activeAccounts.includes(e.account) || e.account === 'holiday'); }
 
+// 특정 날짜에 표시할 이벤트 (다중일 일정 포함)
+function eventsOnDate(evs, ds) {
+  return evs.filter(e => {
+    const start = e.date;
+    const end = e.endDate || e.date;
+    return ds >= start && ds <= end;
+  });
+}
+
+// 이벤트가 해당 날짜에서 시작하는지 (이어진 표시용)
+function isFirstDay(e, ds) { return e.date === ds; }
+function isLastDay(e, ds) { return (e.endDate || e.date) === ds; }
+function isMultiDay(e) { return e.endDate && e.endDate > e.date; }
+
 function navigate(dir) {
   if (currentView === 'month') current.setMonth(current.getMonth() + dir);
   else current.setDate(current.getDate() + dir * 7);
@@ -986,10 +1022,22 @@ function renderMonth() {
   for (let i = 0; i < first; i++) cells += `<div class="month-cell other"><div class="day-n">${prev - first + i + 1}</div></div>`;
   for (let d = 1; d <= days; d++) {
     const ds = `${y}-${pad(m+1)}-${pad(d)}`;
-    const dayEvs = evs.filter(e => e.date === ds);
+    const dayEvs = eventsOnDate(evs, ds);
     cells += `<div class="month-cell${ds === todayStr ? ' today' : ''}" onclick="openDayDetail('${ds}')">
       <div class="day-n">${d}</div>
-      ${dayEvs.slice(0,3).map(e => `<div class="ev ${e.account}" onclick="event.stopPropagation();showEventDetail(${e.id})">${e.title}</div>`).join('')}
+      ${dayEvs.slice(0,3).map(e => {
+        const multi = isMultiDay(e);
+        const first = isFirstDay(e, ds);
+        const last = isLastDay(e, ds);
+        let cls = `ev ${e.account}`;
+        if (multi) {
+          if (first) cls += ' multi-start';
+          else if (last) cls += ' multi-end';
+          else cls += ' multi-mid';
+        }
+        const label = (!multi || first) ? e.title : '&nbsp;';
+        return `<div class="${cls}" onclick="event.stopPropagation();showEventDetail(${e.id})"><span class="ev-label">${label}</span></div>`;
+      }).join('')}
       ${dayEvs.length > 3 ? `<div class="ev-more">+${dayEvs.length-3}개 더</div>` : ''}
     </div>`;
   }
@@ -1025,7 +1073,7 @@ function renderWeek() {
   for (let i = 0; i < 7; i++) {
     const dd = new Date(ws); dd.setDate(dd.getDate() + i);
     const ds = fmtDate(dd);
-    const dayEvs = evs.filter(e => e.date === ds);
+    const dayEvs = eventsOnDate(evs, ds);
     let slots = '';
     for (let h = 0; h < 24; h++) slots += `<div class="week-slot" onclick="openEventModalAt('${ds}','${pad(h)}:00')"></div>`;
     const evHtml = dayEvs.map(e => {
@@ -1058,6 +1106,7 @@ function openEventModal() {
   document.getElementById('event-modal-title').textContent = '새 일정';
   document.getElementById('ev-title').value = '';
   document.getElementById('ev-date').value = fmtDate(current);
+  document.getElementById('ev-enddate').value = '';
   document.getElementById('ev-start').value = '09:00';
   document.getElementById('ev-end').value = '10:00';
   document.getElementById('ev-memo').value = '';
@@ -1077,9 +1126,11 @@ function openEventModalAt(date, time) {
 function saveEvent() {
   const title = document.getElementById('ev-title').value.trim();
   if (!title) { alert('제목을 입력하세요'); return; }
+  const endDateVal = document.getElementById('ev-enddate').value;
   const ev = {
     id: editingEventId || newId(),
     title, date: document.getElementById('ev-date').value,
+    endDate: endDateVal || document.getElementById('ev-date').value,
     start: document.getElementById('ev-start').value,
     end: document.getElementById('ev-end').value,
     account: document.getElementById('ev-account').value,
@@ -1122,6 +1173,7 @@ function editEvent(id) {
   document.getElementById('event-modal-title').textContent = '일정 수정';
   document.getElementById('ev-title').value = e.title;
   document.getElementById('ev-date').value = e.date;
+  document.getElementById('ev-enddate').value = (e.endDate && e.endDate !== e.date) ? e.endDate : '';
   document.getElementById('ev-start').value = e.start;
   document.getElementById('ev-end').value = e.end;
   document.getElementById('ev-memo').value = e.memo || '';
@@ -1137,7 +1189,7 @@ function deleteEventById(id) {
 }
 
 function openDayDetail(ds) {
-  const dayEvs = visibleEvents().filter(e => e.date === ds);
+  const dayEvs = eventsOnDate(visibleEvents(), ds);
   const [y, m, d] = ds.split('-');
   let html = `<div class="modal-head"><h3>${parseInt(y)}년 ${parseInt(m)}월 ${parseInt(d)}일</h3><button class="close-btn" onclick="closeModal('detail-overlay')">×</button></div>`;
   if (!dayEvs.length) html += `<div class="empty">등록된 일정이 없습니다</div>`;
