@@ -476,21 +476,26 @@ body {
 .empty { text-align: center; padding: 24px 12px; color: var(--text-hint); font-size: 12px; }
 
 .profile-btn {
-  width: 34px; height: 34px;
+  width: 36px; height: 36px;
   border-radius: 50%;
-  background: var(--accent-light);
-  border: 1.5px solid var(--border);
-  color: var(--accent);
-  font-size: 14px;
+  background: linear-gradient(135deg, #8b9ef7 0%, #5b6ef5 50%, #4455e0 100%);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1.5px var(--accent), 0 2px 8px rgba(91,110,245,0.25);
+  color: #fff;
+  font-size: 13px;
   font-family: 'ONE-Mobile-Title', sans-serif;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   font-weight: normal;
-  transition: all 0.15s;
+  transition: all 0.18s;
   position: relative;
   flex-shrink: 0;
+  letter-spacing: -0.5px;
 }
-.profile-btn:hover { border-color: var(--accent); background: var(--accent); color: #fff; }
+.profile-btn:hover {
+  box-shadow: 0 0 0 1.5px var(--accent), 0 4px 14px rgba(91,110,245,0.4);
+  transform: scale(1.07);
+}
 .profile-menu {
   position: absolute;
   top: calc(100% + 8px);
@@ -581,7 +586,12 @@ body {
       <button class="btn sm" onclick="openMemoModal(null)">✏️ 메모</button>
       <button class="btn sm primary" onclick="openEventModal()">+ 일정 추가</button>
       <div class="profile-wrap">
-        <button class="profile-btn" id="profile-btn" onclick="toggleProfileMenu()">👤</button>
+        <button class="profile-btn" id="profile-btn" onclick="toggleProfileMenu()">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="8" r="4"/>
+    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+  </svg>
+</button>
         <div class="profile-menu" id="profile-menu">
           <div id="profile-menu-accounts"></div>
           <div class="profile-menu-divider"></div>
