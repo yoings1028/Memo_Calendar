@@ -47,6 +47,15 @@
   link.href = manifestURL;
   document.currentScript.parentNode.appendChild(link);
 </script>
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self' data: blob:;
+  script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net;
+  connect-src 'self' https://www.googleapis.com https://accounts.google.com https://oauth2.googleapis.com https://api.anthropic.com;
+  img-src 'self' data: blob: https:;
+  frame-src https://accounts.google.com;
+">
 <style>
 @font-face {
   font-family: 'ONE-Mobile-Title';
@@ -878,6 +887,15 @@ body {
   link.href = manifestURL;
   document.currentScript.parentNode.appendChild(link);
 </script>
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self' data: blob:;
+  script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net;
+  connect-src 'self' https://www.googleapis.com https://accounts.google.com https://oauth2.googleapis.com https://api.anthropic.com;
+  img-src 'self' data: blob: https:;
+  frame-src https://accounts.google.com;
+">
 <style>
 @font-face {
   font-family: 'ONE-Mobile-Title';
@@ -1845,7 +1863,7 @@ body {
 const CLIENT_ID = '89624804757-04d1eqmkmfl4fc04c03a3cjejovb36h8.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.appdata';
 
-let accounts = JSON.parse(localStorage.getItem('cal_accounts') || '[]');
+let accounts = JSON.parse(localStorage.getItem('cal_accounts') || '[]'); // 토큰은 로그인 시 메모리에만 저장
 let events = JSON.parse(localStorage.getItem('cal_events') || '[]');
 let memos = JSON.parse(localStorage.getItem('cal_memos') || '[]');
 let activeAccounts = JSON.parse(localStorage.getItem('cal_active') || '["personal","work"]');
@@ -1955,13 +1973,25 @@ async function loadMemosFromDrive() {
 }
 
 function save() {
-  localStorage.setItem('cal_accounts', JSON.stringify(accounts));
+  // 토큰은 localStorage에 저장하지 않음 (보안)
+  const accountsNoToken = accounts.map(({token, ...rest}) => rest);
+  localStorage.setItem('cal_accounts', JSON.stringify(accountsNoToken));
   localStorage.setItem('cal_events', JSON.stringify(events));
   localStorage.setItem('cal_memos', JSON.stringify(memos));
   localStorage.setItem('cal_active', JSON.stringify(activeAccounts));
   localStorage.setItem('cal_nextid', String(nextId));
 }
 function newId() { return nextId++; }
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 function fmtDate(d) { return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 function pad(n) { return String(n).padStart(2,'0'); }
 
@@ -2115,7 +2145,7 @@ function updateProfileMenu() {
   el.innerHTML = accounts.map(a => `
     <div class="profile-menu-header">
       <div class="label">${labels[a.type] || a.type} 계정</div>
-      <div class="email">${a.email}</div>
+      <div class="email">${escapeHtml(a.email)}</div>
     </div>
     <button class="profile-menu-item danger" onclick="logoutAccount('${a.type}')">
       <span style="width:8px;height:8px;border-radius:50%;background:${colors[a.type]};display:inline-block"></span>
@@ -2173,7 +2203,7 @@ function toggleMobileProfileMenu() {
       el.innerHTML = accounts.map(a => `
         <div class="profile-menu-header">
           <div class="label">${labels[a.type]||a.type} 계정</div>
-          <div class="email">${a.email}</div>
+          <div class="email">${escapeHtml(a.email)}</div>
         </div>
         <button class="profile-menu-item danger" onclick="logoutAccount('${a.type}')">
           <span style="width:8px;height:8px;border-radius:50%;background:${colors[a.type]};display:inline-block"></span>
@@ -2276,7 +2306,7 @@ function renderAccounts() {
       <div class="account-dot" style="background:${colors[a.type]}"></div>
       <div style="flex:1;overflow:hidden">
         <div class="account-label">${labels[a.type]}</div>
-        <div class="account-email">${a.email}</div>
+        <div class="account-email">${escapeHtml(a.email)}</div>
       </div>
     </div>`).join('');
 }
@@ -2293,7 +2323,7 @@ function renderMemosSidebar() {
     <div class="memo-item" onclick="openMemoModal(${m.id})">
       <div class="memo-item-title">
         <span class="tag ${m.account}">${m.account === 'personal' ? '개인' : '업무'}</span>
-        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.content.split('\n')[0].slice(0,18) || '(내용 없음)'}</span>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(m.content).split('\n')[0].slice(0,18) || '(내용 없음)'}</span>
       </div>
       <div class="memo-item-date">${m.date}</div>
     </div>`).join('');
@@ -2431,7 +2461,7 @@ function renderMonth() {
             else cls += ' multi-cont';
           }
           const showLabel = !startsBeforeWeek;
-          evRows += `<div class="${cls}" style="grid-column:span ${span}" onclick="showEventDetail(${ev.id})" title="${ev.title}"><span class="ev-slot-label">${showLabel ? ev.title : '&nbsp;'}</span></div>`;
+          evRows += `<div class="${cls}" style="grid-column:span ${span}" onclick="showEventDetail(${ev.id})" title="${escapeHtml(ev.title)}"><span class="ev-slot-label">${showLabel ? ev.title : '&nbsp;'}</span></div>`;
           i += span;
         } else if (cell && !cell.isStart) {
           i++;
@@ -2498,7 +2528,7 @@ function renderWeek() {
       const [eh, em] = e.end.split(':').map(Number);
       const top = (sh * 60 + sm) / 60 * 52;
       const h = Math.max(((eh * 60 + em) - (sh * 60 + sm)) / 60 * 52, 24);
-      return `<div class="week-ev ${e.account}" style="top:${top}px;height:${h}px" onclick="showEventDetail(${e.id})">${e.title}</div>`;
+      return `<div class="week-ev ${e.account}" style="top:${top}px;height:${h}px" onclick="showEventDetail(${e.id})">${escapeHtml(e.title)}</div>`;
     }).join('');
     cols += `<div class="week-col">${slots}${evHtml}</div>`;
   }
@@ -2657,13 +2687,13 @@ function showEventDetail(id) {
   const e = events.find(x => x.id === id); if (!e) return;
   document.getElementById('detail-content').innerHTML = `
     <div class="modal-head">
-      <h3>${e.title}</h3>
+      <h3>${escapeHtml(e.title)}</h3>
       <button class="close-btn" onclick="closeModal('detail-overlay')">×</button>
     </div>
     <div style="margin-bottom:12px"><span class="tag ${e.account}">${e.account === 'personal' ? '개인' : '업무'}</span></div>
     <div style="font-size:13px;color:var(--text-sub);margin-bottom:4px">📅 ${e.date}</div>
     <div style="font-size:13px;color:var(--text-sub);margin-bottom:${e.memo?'14px':'0'}">🕐 ${e.start} — ${e.end}</div>
-    ${e.memo ? `<div style="font-size:13px;background:var(--surface2);padding:12px;border-radius:var(--radius-sm);line-height:1.7;border:1.5px solid var(--border)">${e.memo}</div>` : ''}
+    ${e.memo ? `<div style="font-size:13px;background:var(--surface2);padding:12px;border-radius:var(--radius-sm);line-height:1.7;border:1.5px solid var(--border)">${escapeHtml(e.memo)}</div>` : ''}
     <div class="modal-footer" style="margin-top:16px">
       <button class="btn btn-danger" onclick="deleteEventById(${e.id})">삭제</button>
       <button class="btn" onclick="editEvent(${e.id})">수정</button>
@@ -2705,7 +2735,7 @@ function openDayDetail(ds) {
     <div class="detail-ev-card" onclick="closeModal('detail-overlay');showEventDetail(${e.id})">
       <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">
         <span class="tag ${e.account}">${e.account === 'personal' ? '개인' : '업무'}</span>
-        <span style="font-weight:600;font-size:13px">${e.title}</span>
+        <span style="font-weight:600;font-size:13px">${escapeHtml(e.title)}</span>
       </div>
       <div style="font-size:12px;color:var(--text-sub)">🕐 ${e.start} — ${e.end}</div>
     </div>`).join('');
