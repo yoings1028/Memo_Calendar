@@ -2065,19 +2065,31 @@ function fetchCalendarEvents(type, token) {
     .then(r => r.json())
     .then(async listData => {
       if (!listData.items) return;
-      events = events.filter(e => e.source !== 'google' || (e.account !== type && e.account !== 'holiday'));
+      // 이 계정 이벤트 초기화 (공휴일은 personal 계정일 때만 초기화)
+      events = events.filter(e => {
+        if (e.source !== 'google') return true;
+        if (e.account === type) return false;
+        if (e.account === 'holiday' && type === 'personal') return false;
+        return true;
+      });
 
       const fetchPromises = listData.items.map(cal => {
         const calId = encodeURIComponent(cal.id);
         const isHoliday = cal.id.includes('holiday') || (cal.summary || '').includes('공휴일');
         const calType = isHoliday ? 'holiday' : type;
-        return fetch(
-          `https://www.googleapis.com/calendar/v3/calendars/${calId}/events?timeMin=${from}&timeMax=${to}&singleEvents=true&orderBy=startTime&maxResults=200`,
-          { headers }
-        )
-        .then(r => r.json())
-        .then(data => { if (data.items) parseItems(data.items, calType); })
-        .catch(() => {});
+
+        // 공휴일은 개인 계정에서만 불러오기 (중복 방지)
+        if (isHoliday && type !== 'personal') return Promise.resolve();
+
+        // 페이지네이션으로 전체 불러오기
+        async function fetchAllPages(pageToken) {
+          let url = `https://www.googleapis.com/calendar/v3/calendars/${calId}/events?timeMin=${from}&timeMax=${to}&singleEvents=true&orderBy=startTime&maxResults=500`;
+          if (pageToken) url += `&pageToken=${pageToken}`;
+          const data = await fetch(url, { headers }).then(r => r.json());
+          if (data.items) parseItems(data.items, calType);
+          if (data.nextPageToken) await fetchAllPages(data.nextPageToken);
+        }
+        return fetchAllPages(null).catch(e => console.error('캘린더 불러오기 실패:', cal.summary, e));
       });
 
       await Promise.all(fetchPromises);
