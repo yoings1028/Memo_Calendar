@@ -6,7 +6,7 @@
 <title>Memo Calendar</title>
 
 <!-- 파비콘 -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%235b6ef5'/%3E%3Crect x='10' y='14' width='44' height='40' rx='7' fill='white' fill-opacity='0.2'/%3E%3Crect x='10' y='14' width='44' height='40' rx='7' stroke='white' stroke-width='3' fill='none'/%3E%3Cpath d='M22 8v12M42 8v12' stroke='white' stroke-width='3.5' stroke-linecap='round'/%3E%3Cpath d='M10 28h44' stroke='white' stroke-width='3'/%3E%3Crect x='18' y='36' width='8' height='8' rx='1.5' fill='white'/%3E%3Crect x='30' y='36' width='8' height='8' rx='1.5' fill='white'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%235b6ef5'/%3E%3Crect x='14' y='18' width='36' height='32' rx='6' fill='white' fill-opacity='0.2'/%3E%3Crect x='14' y='18' width='36' height='32' rx='6' stroke='white' stroke-width='2.5' fill='none'/%3E%3Cpath d='M24 12v10M40 12v10' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M14 26h36' stroke='white' stroke-width='2.5'/%3E%3Crect x='20' y='32' width='7' height='7' rx='1.5' fill='white'/%3E%3Crect x='31' y='32' width='7' height='7' rx='1.5' fill='white'/%3E%3C/svg%3E">
 
 <!-- PWA 홈 화면 추가 -->
 <meta name="mobile-web-app-capable" content="yes">
@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Memo Calendar">
 <meta name="theme-color" content="#5b6ef5">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%235b6ef5'/%3E%3Crect x='28' y='40' width='124' height='112' rx='18' fill='white' fill-opacity='0.2'/%3E%3Crect x='28' y='40' width='124' height='112' rx='18' stroke='white' stroke-width='7' fill='none'/%3E%3Cpath d='M62 20v36M118 20v36' stroke='white' stroke-width='9' stroke-linecap='round'/%3E%3Cpath d='M28 76h124' stroke='white' stroke-width='7'/%3E%3Crect x='48' y='96' width='26' height='26' rx='4' fill='white'/%3E%3Crect x='86' y='96' width='26' height='26' rx='4' fill='white'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%235b6ef5'/%3E%3Crect x='42' y='52' width='96' height='86' rx='14' fill='white' fill-opacity='0.2'/%3E%3Crect x='42' y='52' width='96' height='86' rx='14' stroke='white' stroke-width='5.5' fill='none'/%3E%3Cpath d='M68 36v26M112 36v26' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3Cpath d='M42 76h96' stroke='white' stroke-width='5.5'/%3E%3Crect x='58' y='92' width='20' height='20' rx='3' fill='white'/%3E%3Crect x='88' y='92' width='20' height='20' rx='3' fill='white'/%3E%3C/svg%3E">
 
 <!-- PWA Manifest -->
 <script>
@@ -27,8 +27,8 @@
     theme_color: "#5b6ef5",
     icons: [
       {
-        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%235b6ef5'/%3E%3Crect x='30' y='42' width='132' height='120' rx='20' fill='white' fill-opacity='0.2'/%3E%3Crect x='30' y='42' width='132' height='120' rx='20' stroke='white' stroke-width='8' fill='none'/%3E%3Cpath d='M66 20v38M126 20v38' stroke='white' stroke-width='10' stroke-linecap='round'/%3E%3Cpath d='M30 82h132' stroke='white' stroke-width='8'/%3E%3Crect x='52' y='102' width='28' height='28' rx='4' fill='white'/%3E%3Crect x='92' y='102' width='28' height='28' rx='4' fill='white'/%3E%3C/svg%3E",
-        sizes: "192x192",
+        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%235b6ef5'/%3E%3Crect x='112' y='140' width='288' height='258' rx='42' fill='white' fill-opacity='0.2'/%3E%3Crect x='112' y='140' width='288' height='258' rx='42' stroke='white' stroke-width='16' fill='none'/%3E%3Cpath d='M192 92v76M320 92v76' stroke='white' stroke-width='20' stroke-linecap='round'/%3E%3Cpath d='M112 224h288' stroke='white' stroke-width='16'/%3E%3Crect x='156' y='268' width='60' height='60' rx='10' fill='white'/%3E%3Crect x='256' y='268' width='60' height='60' rx='10' fill='white'/%3E%3C/svg%3E",
+        sizes: "512x512",
         type: "image/svg+xml"
       }
     ]
@@ -837,7 +837,7 @@ body {
 <title>Memo Calendar</title>
 
 <!-- 파비콘 -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%235b6ef5'/%3E%3Crect x='10' y='14' width='44' height='40' rx='7' fill='white' fill-opacity='0.2'/%3E%3Crect x='10' y='14' width='44' height='40' rx='7' stroke='white' stroke-width='3' fill='none'/%3E%3Cpath d='M22 8v12M42 8v12' stroke='white' stroke-width='3.5' stroke-linecap='round'/%3E%3Cpath d='M10 28h44' stroke='white' stroke-width='3'/%3E%3Crect x='18' y='36' width='8' height='8' rx='1.5' fill='white'/%3E%3Crect x='30' y='36' width='8' height='8' rx='1.5' fill='white'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%235b6ef5'/%3E%3Crect x='14' y='18' width='36' height='32' rx='6' fill='white' fill-opacity='0.2'/%3E%3Crect x='14' y='18' width='36' height='32' rx='6' stroke='white' stroke-width='2.5' fill='none'/%3E%3Cpath d='M24 12v10M40 12v10' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M14 26h36' stroke='white' stroke-width='2.5'/%3E%3Crect x='20' y='32' width='7' height='7' rx='1.5' fill='white'/%3E%3Crect x='31' y='32' width='7' height='7' rx='1.5' fill='white'/%3E%3C/svg%3E">
 
 <!-- PWA 홈 화면 추가 -->
 <meta name="mobile-web-app-capable" content="yes">
@@ -845,7 +845,7 @@ body {
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Memo Calendar">
 <meta name="theme-color" content="#5b6ef5">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%235b6ef5'/%3E%3Crect x='28' y='40' width='124' height='112' rx='18' fill='white' fill-opacity='0.2'/%3E%3Crect x='28' y='40' width='124' height='112' rx='18' stroke='white' stroke-width='7' fill='none'/%3E%3Cpath d='M62 20v36M118 20v36' stroke='white' stroke-width='9' stroke-linecap='round'/%3E%3Cpath d='M28 76h124' stroke='white' stroke-width='7'/%3E%3Crect x='48' y='96' width='26' height='26' rx='4' fill='white'/%3E%3Crect x='86' y='96' width='26' height='26' rx='4' fill='white'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%235b6ef5'/%3E%3Crect x='42' y='52' width='96' height='86' rx='14' fill='white' fill-opacity='0.2'/%3E%3Crect x='42' y='52' width='96' height='86' rx='14' stroke='white' stroke-width='5.5' fill='none'/%3E%3Cpath d='M68 36v26M112 36v26' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3Cpath d='M42 76h96' stroke='white' stroke-width='5.5'/%3E%3Crect x='58' y='92' width='20' height='20' rx='3' fill='white'/%3E%3Crect x='88' y='92' width='20' height='20' rx='3' fill='white'/%3E%3C/svg%3E">
 
 <!-- PWA Manifest -->
 <script>
@@ -858,8 +858,8 @@ body {
     theme_color: "#5b6ef5",
     icons: [
       {
-        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%235b6ef5'/%3E%3Crect x='30' y='42' width='132' height='120' rx='20' fill='white' fill-opacity='0.2'/%3E%3Crect x='30' y='42' width='132' height='120' rx='20' stroke='white' stroke-width='8' fill='none'/%3E%3Cpath d='M66 20v38M126 20v38' stroke='white' stroke-width='10' stroke-linecap='round'/%3E%3Cpath d='M30 82h132' stroke='white' stroke-width='8'/%3E%3Crect x='52' y='102' width='28' height='28' rx='4' fill='white'/%3E%3Crect x='92' y='102' width='28' height='28' rx='4' fill='white'/%3E%3C/svg%3E",
-        sizes: "192x192",
+        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%235b6ef5'/%3E%3Crect x='112' y='140' width='288' height='258' rx='42' fill='white' fill-opacity='0.2'/%3E%3Crect x='112' y='140' width='288' height='258' rx='42' stroke='white' stroke-width='16' fill='none'/%3E%3Cpath d='M192 92v76M320 92v76' stroke='white' stroke-width='20' stroke-linecap='round'/%3E%3Cpath d='M112 224h288' stroke='white' stroke-width='16'/%3E%3Crect x='156' y='268' width='60' height='60' rx='10' fill='white'/%3E%3Crect x='256' y='268' width='60' height='60' rx='10' fill='white'/%3E%3C/svg%3E",
+        sizes: "512x512",
         type: "image/svg+xml"
       }
     ]
