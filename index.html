@@ -4,6 +4,42 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Memo Calendar</title>
+
+<!-- 파비콘 -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%235b6ef5'/%3E%3Crect x='10' y='14' width='44' height='40' rx='7' fill='white' fill-opacity='0.2'/%3E%3Crect x='10' y='14' width='44' height='40' rx='7' stroke='white' stroke-width='3' fill='none'/%3E%3Cpath d='M22 8v12M42 8v12' stroke='white' stroke-width='3.5' stroke-linecap='round'/%3E%3Cpath d='M10 28h44' stroke='white' stroke-width='3'/%3E%3Crect x='18' y='36' width='8' height='8' rx='1.5' fill='white'/%3E%3Crect x='30' y='36' width='8' height='8' rx='1.5' fill='white'/%3E%3C/svg%3E">
+
+<!-- PWA 홈 화면 추가 -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Memo Calendar">
+<meta name="theme-color" content="#5b6ef5">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%235b6ef5'/%3E%3Crect x='28' y='40' width='124' height='112' rx='18' fill='white' fill-opacity='0.2'/%3E%3Crect x='28' y='40' width='124' height='112' rx='18' stroke='white' stroke-width='7' fill='none'/%3E%3Cpath d='M62 20v36M118 20v36' stroke='white' stroke-width='9' stroke-linecap='round'/%3E%3Cpath d='M28 76h124' stroke='white' stroke-width='7'/%3E%3Crect x='48' y='96' width='26' height='26' rx='4' fill='white'/%3E%3Crect x='86' y='96' width='26' height='26' rx='4' fill='white'/%3E%3C/svg%3E">
+
+<!-- PWA Manifest -->
+<script>
+  const manifestData = {
+    name: "Memo Calendar",
+    short_name: "Memo Cal",
+    start_url: "./",
+    display: "standalone",
+    background_color: "#eef1f8",
+    theme_color: "#5b6ef5",
+    icons: [
+      {
+        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%235b6ef5'/%3E%3Crect x='30' y='42' width='132' height='120' rx='20' fill='white' fill-opacity='0.2'/%3E%3Crect x='30' y='42' width='132' height='120' rx='20' stroke='white' stroke-width='8' fill='none'/%3E%3Cpath d='M66 20v38M126 20v38' stroke='white' stroke-width='10' stroke-linecap='round'/%3E%3Cpath d='M30 82h132' stroke='white' stroke-width='8'/%3E%3Crect x='52' y='102' width='28' height='28' rx='4' fill='white'/%3E%3Crect x='92' y='102' width='28' height='28' rx='4' fill='white'/%3E%3C/svg%3E",
+        sizes: "192x192",
+        type: "image/svg+xml"
+      }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+  const manifestURL = URL.createObjectURL(blob);
+  const link = document.createElement('link');
+  link.rel = 'manifest';
+  link.href = manifestURL;
+  document.currentScript.parentNode.appendChild(link);
+</script>
 <style>
 @font-face {
   font-family: 'ONE-Mobile-Title';
@@ -799,6 +835,42 @@ body {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Memo Calendar</title>
+
+<!-- 파비콘 -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%235b6ef5'/%3E%3Crect x='10' y='14' width='44' height='40' rx='7' fill='white' fill-opacity='0.2'/%3E%3Crect x='10' y='14' width='44' height='40' rx='7' stroke='white' stroke-width='3' fill='none'/%3E%3Cpath d='M22 8v12M42 8v12' stroke='white' stroke-width='3.5' stroke-linecap='round'/%3E%3Cpath d='M10 28h44' stroke='white' stroke-width='3'/%3E%3Crect x='18' y='36' width='8' height='8' rx='1.5' fill='white'/%3E%3Crect x='30' y='36' width='8' height='8' rx='1.5' fill='white'/%3E%3C/svg%3E">
+
+<!-- PWA 홈 화면 추가 -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Memo Calendar">
+<meta name="theme-color" content="#5b6ef5">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%235b6ef5'/%3E%3Crect x='28' y='40' width='124' height='112' rx='18' fill='white' fill-opacity='0.2'/%3E%3Crect x='28' y='40' width='124' height='112' rx='18' stroke='white' stroke-width='7' fill='none'/%3E%3Cpath d='M62 20v36M118 20v36' stroke='white' stroke-width='9' stroke-linecap='round'/%3E%3Cpath d='M28 76h124' stroke='white' stroke-width='7'/%3E%3Crect x='48' y='96' width='26' height='26' rx='4' fill='white'/%3E%3Crect x='86' y='96' width='26' height='26' rx='4' fill='white'/%3E%3C/svg%3E">
+
+<!-- PWA Manifest -->
+<script>
+  const manifestData = {
+    name: "Memo Calendar",
+    short_name: "Memo Cal",
+    start_url: "./",
+    display: "standalone",
+    background_color: "#eef1f8",
+    theme_color: "#5b6ef5",
+    icons: [
+      {
+        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%235b6ef5'/%3E%3Crect x='30' y='42' width='132' height='120' rx='20' fill='white' fill-opacity='0.2'/%3E%3Crect x='30' y='42' width='132' height='120' rx='20' stroke='white' stroke-width='8' fill='none'/%3E%3Cpath d='M66 20v38M126 20v38' stroke='white' stroke-width='10' stroke-linecap='round'/%3E%3Cpath d='M30 82h132' stroke='white' stroke-width='8'/%3E%3Crect x='52' y='102' width='28' height='28' rx='4' fill='white'/%3E%3Crect x='92' y='102' width='28' height='28' rx='4' fill='white'/%3E%3C/svg%3E",
+        sizes: "192x192",
+        type: "image/svg+xml"
+      }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+  const manifestURL = URL.createObjectURL(blob);
+  const link = document.createElement('link');
+  link.rel = 'manifest';
+  link.href = manifestURL;
+  document.currentScript.parentNode.appendChild(link);
+</script>
 <style>
 @font-face {
   font-family: 'ONE-Mobile-Title';
