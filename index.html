@@ -294,6 +294,26 @@ body {
 .account-label { font-weight: 600; font-size: 12px; }
 
 /* 메모 */
+/* 사이드바 메모 박스 */
+.sidebar-memo-box {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface);
+}
+.sidebar-memo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--surface2);
+  border-bottom: 1.5px solid var(--border);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
 .memo-item {
   padding: 9px 10px;
   border: 1.5px solid var(--border);
@@ -1059,6 +1079,26 @@ body {
 .account-label { font-weight: 600; font-size: 12px; }
 
 /* 메모 */
+/* 사이드바 메모 박스 */
+.sidebar-memo-box {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface);
+}
+.sidebar-memo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--surface2);
+  border-bottom: 1.5px solid var(--border);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
 .memo-item {
   padding: 9px 10px;
   border: 1.5px solid var(--border);
@@ -1617,10 +1657,13 @@ body {
         <button class="btn sm" style="width:100%;margin-top:4px;justify-content:center" onclick="addAccount()">+ 계정 추가</button>
       </div>
 
-      <div class="sidebar-section" style="display:none">
-        <h4>메모장</h4>
+      <div class="sidebar-memo-box">
+        <div class="sidebar-memo-header">
+          <span>메모</span>
+          <button class="btn sm" onclick="openMemoModal(null)" style="padding:3px 8px;font-size:11px">+ 추가</button>
+        </div>
         <div id="memos-sidebar"></div>
-        <div id="memos-empty" class="empty" style="display:none;padding:8px 0">메모 없음</div>
+        <div id="memos-empty" class="empty" style="display:none;padding:8px 0;font-size:11px">작성된 메모가 없어요</div>
       </div>
     </div>
 
@@ -2035,12 +2078,17 @@ function renderAccounts() {
 function renderMemosSidebar() {
   const el = document.getElementById('memos-sidebar');
   const emp = document.getElementById('memos-empty');
-  const shown = memos.filter(m => activeAccounts.includes(m.account));
+  const shown = [...memos]
+    .filter(m => activeAccounts.includes(m.account))
+    .reverse(); // 최신순
   if (!shown.length) { el.innerHTML = ''; emp.style.display = 'block'; return; }
   emp.style.display = 'none';
   el.innerHTML = shown.map(m => `
     <div class="memo-item" onclick="openMemoModal(${m.id})">
-      <div class="memo-item-title"><span class="tag ${m.account}">${m.account === 'personal' ? '개인' : '업무'}</span>${m.title}</div>
+      <div class="memo-item-title">
+        <span class="tag ${m.account}">${m.account === 'personal' ? '개인' : '업무'}</span>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.content.split('\n')[0].slice(0,18) || '(내용 없음)'}</span>
+      </div>
       <div class="memo-item-date">${m.date}</div>
     </div>`).join('');
 }
