@@ -1628,16 +1628,14 @@ body {
       <div class="loading">불러오는 중...</div>
     </div>
   </div>
+  <!-- 포스트잇 (로그인 후에만 표시) -->
+  <div id="postit-container"></div>
+  <button id="postit-toggle" onclick="togglePostits()" title="메모 접기/펼치기">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/>
+    </svg>
+  </button>
 </div>
-
-<!-- 포스트잇 컨테이너 -->
-<div id="postit-container"></div>
-<!-- 포스트잇 접기 버튼 -->
-<button id="postit-toggle" onclick="togglePostits()" title="메모 접기/펼치기">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-    <path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/>
-  </svg>
-</button>
 
 <!-- 일정 모달 -->
 <div class="overlay" id="event-overlay">
@@ -1745,22 +1743,45 @@ function loadGoogleScript(cb) {
 
 function signIn(type) {
   loadGoogleScript(() => {
+    // 매번 새 tokenClient 생성 (모바일 재로그인 호환)
     const tc = google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: SCOPES,
+      prompt: '',
       callback: (resp) => {
-        if (resp.error) { alert('로그인 실패: ' + resp.error); return; }
-        const email = prompt(`${type === 'personal' ? '개인' : '업무'} 계정 이메일을 입력하세요:`);
-        if (!email) return;
-        const existing = accounts.find(a => a.type === type);
-        if (existing) { existing.token = resp.access_token; existing.email = email; }
-        else accounts.push({ type, email, token: resp.access_token });
-        save();
-        showApp();
-        fetchCalendarEvents(type, resp.access_token);
+        if (resp.error) {
+          console.error('로그인 오류:', resp.error, resp.error_description);
+          alert('로그인 실패: ' + (resp.error_description || resp.error));
+          return;
+        }
+        // 이메일을 구글 API로 자동 가져오기
+        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${resp.access_token}` }
+        })
+        .then(r => r.json())
+        .then(info => {
+          const email = info.email || prompt(`${type === 'personal' ? '개인' : '업무'} 계정 이메일:`);
+          if (!email) return;
+          const existing = accounts.find(a => a.type === type);
+          if (existing) { existing.token = resp.access_token; existing.email = email; }
+          else accounts.push({ type, email, token: resp.access_token });
+          save();
+          showApp();
+          fetchCalendarEvents(type, resp.access_token);
+        })
+        .catch(() => {
+          const email = prompt(`${type === 'personal' ? '개인' : '업무'} 계정 이메일:`);
+          if (!email) return;
+          const existing = accounts.find(a => a.type === type);
+          if (existing) { existing.token = resp.access_token; existing.email = email; }
+          else accounts.push({ type, email, token: resp.access_token });
+          save();
+          showApp();
+          fetchCalendarEvents(type, resp.access_token);
+        });
       }
     });
-    tc.requestAccessToken({ prompt: 'consent' });
+    tc.requestAccessToken({ prompt: 'select_account' });
   });
 }
 
