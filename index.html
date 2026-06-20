@@ -2028,8 +2028,8 @@ function addAccount() {
 
 function fetchCalendarEvents(type, token) {
   const now = new Date();
-  const from = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
-  const to = new Date(now.getFullYear(), now.getMonth() + 3, 0).toISOString();
+  const from = new Date(now.getFullYear(), 0, 1).toISOString();       // 올해 1월 1일
+  const to = new Date(now.getFullYear() + 1, 11, 31).toISOString(); // 내년 12월 31일
   const headers = { Authorization: `Bearer ${token}` };
 
   function parseItems(items, calType) {
