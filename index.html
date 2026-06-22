@@ -1319,7 +1319,7 @@ body {
       <h3 id="event-modal-title">새 일정</h3>
       <button class="close-btn" onclick="closeModal('event-overlay')">×</button>
     </div>
-    <div class="field"><label>제목</label><input type="text" id="ev-title" placeholder="일정 제목을 입력하세요"></div>
+    <div class="field"><label>제목</label><input type="text" id="ev-title" placeholder="일정 제목을 입력하세요" maxlength="100"></div>
     <div class="field">
       <label>날짜</label>
       <div class="time-row">
@@ -1357,7 +1357,7 @@ body {
         <option value="work">업무</option>
       </select>
     </div>
-    <div class="field"><textarea id="memo-content" placeholder="메모 내용을 입력하세요..." style="min-height:160px;margin-top:4px"></textarea></div>
+    <div class="field"><textarea id="memo-content" placeholder="메모 내용을 입력하세요..." style="min-height:160px;margin-top:4px" maxlength="2000"></textarea></div>
     <div class="modal-footer">
       <button class="btn btn-danger" id="memo-delete-btn" onclick="deleteCurrentMemo()" style="display:none">삭제</button>
       <button class="btn" onclick="closeModal('memo-overlay')">취소</button>
@@ -1409,7 +1409,7 @@ body {
       </select>
     </div>
     <div class="field"><label>마감일 (선택)</label><input type="date" id="todo-due"></div>
-    <div class="field"><label>메모 (선택)</label><textarea id="todo-note" placeholder="추가 메모..." style="min-height:70px"></textarea></div>
+    <div class="field"><label>메모 (선택)</label><textarea id="todo-note" placeholder="추가 메모..." style="min-height:70px" maxlength="500"></textarea></div>
     <div class="modal-footer">
       <button class="btn btn-danger" id="todo-delete-btn" onclick="deleteCurrentTodo()" style="display:none">삭제</button>
       <button class="btn" onclick="closeModal('todo-overlay')">취소</button>
@@ -1797,7 +1797,7 @@ function updateProfileMenu() {
       <div class="label">${labels[a.type] || a.type} 계정</div>
       <div class="email">${escapeHtml(a.email)}</div>
     </div>
-    <button class="profile-menu-item danger" onclick="logoutAccount('${a.type}')">
+    <button class="profile-menu-item danger" onclick="logoutAccount('${escapeHtml(a.type)}')">
       <span style="width:8px;height:8px;border-radius:50%;background:${colors[a.type]};display:inline-block"></span>
       ${labels[a.type]} 계정 로그아웃
     </button>`).join('<div class="profile-menu-divider"></div>');
@@ -1938,7 +1938,7 @@ function toggleMobileProfileMenu() {
           <div class="label">${labels[a.type]||a.type} 계정</div>
           <div class="email">${escapeHtml(a.email)}</div>
         </div>
-        <button class="profile-menu-item danger" onclick="logoutAccount('${a.type}')">
+        <button class="profile-menu-item danger" onclick="logoutAccount('${escapeHtml(a.type)}')">
           <span style="width:8px;height:8px;border-radius:50%;background:${colors[a.type]};display:inline-block"></span>
           ${labels[a.type]} 계정 로그아웃
         </button>`).join('<div class="profile-menu-divider"></div>');
@@ -2061,7 +2061,7 @@ function renderMemosSidebar() {
     <div class="memo-item" onclick="openMemoModal(${m.id})">
       <div class="memo-item-title">
         <span class="tag ${m.account}">${m.account === 'personal' ? '개인' : '업무'}</span>
-        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(m.content).split('\n')[0].slice(0,18) || '(내용 없음)'}</span>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(m.content.split('\n')[0].slice(0,18) || '(내용 없음)')}</span>
       </div>
       <div class="memo-item-date">${m.date}</div>
     </div>`).join('');
@@ -2566,7 +2566,7 @@ function renderPostit(memo) {
         </button>
       </div>
     </div>
-    <div class="postit-body">${memo.content}</div>
+    <div class="postit-body">${escapeHtml(memo.content)}</div>
 `;
   container.appendChild(el);
 }
