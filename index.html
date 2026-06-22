@@ -1431,6 +1431,11 @@ const CLIENT_ID = '89624804757-04d1eqmkmfl4fc04c03a3cjejovb36h8.apps.googleuserc
 const SCOPES = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.appdata';
 
 let accounts = JSON.parse(localStorage.getItem('cal_accounts') || '[]'); // 토큰은 로그인 시 메모리에만 저장
+// sessionStorage에서 토큰 복원 (같은 탭/브라우저 세션)
+try {
+  const savedTokens = JSON.parse(sessionStorage.getItem('cal_tokens') || '{}');
+  accounts = accounts.map(a => ({ ...a, token: savedTokens[a.type] || null }));
+} catch(e) {}
 let events = JSON.parse(localStorage.getItem('cal_events') || '[]');
 let memos = JSON.parse(localStorage.getItem('cal_memos') || '[]');
 let activeAccounts = JSON.parse(localStorage.getItem('cal_active') || '["personal","work"]');
@@ -1453,18 +1458,25 @@ let driveFileId = localStorage.getItem('drive_memo_file_id') || null;
 
 async function getDriveToken() {
   const acc = accounts.find(a => a.type === 'personal') || accounts[0];
-  if (!acc) return null;
-  // 토큰 유효성 빠른 체크
+  if (!acc || !acc.token) return null;
+  // 토큰 유효성 체크 - drive.appdata 포함 여부 확인
   try {
     const test = await fetch('https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=' + acc.token);
     const info = await test.json();
-    if (info.error || !info.scope || !info.scope.includes('drive')) {
-      console.warn('드라이브 권한 없음 - 재로그인 필요');
+    if (info.error) {
+      console.warn('드라이브 토큰 만료 - 재로그인 필요');
+      return null;
+    }
+    // scope에 drive 관련 권한이 있는지 확인 (appdata 또는 drive 포함)
+    const scope = info.scope || '';
+    if (!scope.includes('drive')) {
+      console.warn('drive.appdata 권한 없음 - 재로그인 필요');
       return null;
     }
     return acc.token;
   } catch(e) {
-    return acc.token; // 오류시 일단 시도
+    // 네트워크 오류시 토큰이 있으면 일단 시도
+    return acc.token;
   }
 }
 
@@ -1600,9 +1612,12 @@ async function loadMemosFromDrive() {
 }
 
 function save() {
-  // 토큰은 localStorage에 저장하지 않음 (보안)
+  // 토큰은 localStorage에 저장하지 않음 (보안) - sessionStorage에만 임시 보관
   const accountsNoToken = accounts.map(({token, ...rest}) => rest);
   localStorage.setItem('cal_accounts', JSON.stringify(accountsNoToken));
+  // 세션 동안만 토큰 유지 (탭 닫으면 삭제)
+  const tokensOnly = accounts.reduce((m, a) => { if(a.token) m[a.type]=a.token; return m; }, {});
+  sessionStorage.setItem('cal_tokens', JSON.stringify(tokensOnly));
   localStorage.setItem('cal_events', JSON.stringify(events));
   localStorage.setItem('cal_memos', JSON.stringify(memos));
   localStorage.setItem('cal_todos', JSON.stringify(todos));
