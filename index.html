@@ -967,26 +967,17 @@ body {
   /* 포스트잇 */
   .postit { width: 160px; }
   #postit-toggle { bottom: 16px; right: 16px; width: 38px; height: 38px; }
-}DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Memo Calendar</title>
-
+}
 <!-- 파비콘 -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%235b6ef5'/%3E%3Crect x='14' y='18' width='36' height='32' rx='6' fill='white' fill-opacity='0.2'/%3E%3Crect x='14' y='18' width='36' height='32' rx='6' stroke='white' stroke-width='2.5' fill='none'/%3E%3Cpath d='M24 12v10M40 12v10' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M14 26h36' stroke='white' stroke-width='2.5'/%3E%3Crect x='20' y='32' width='7' height='7' rx='1.5' fill='white'/%3E%3Crect x='31' y='32' width='7' height='7' rx='1.5' fill='white'/%3E%3C/svg%3E">
-
-<!-- PWA 홈 화면 추가 -->
+</style>
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA/UlEQVR4nO1XuxGDMAy1uVQwDoWHCROkCLNAwQQwDAXjhDZpQs68yCAl/oS7vAaje2c9SzJIWhE4X293yv4thrbQaFsZQjneEpLFdo6+stjOUUS2R1zQNzl7cwlXc05vb1jVszeuUoIIhEJyAc4U9E0+Wq/GWo/IBTi5VT0b4NICns4vlmmy1uWOgC1uhyK4KSjh6YsrqgHWhlJu8iJMLuDksBu1LqZg+NkI4DX0hU6tvxNOAQgqHVjpHM4bOClw1cIk5HwsICj+Ag4hwFXJpZBDgnsNJX9BEQ6RgrACqHEpFoa20Mkj8Do99obQlHqB3Q8ukU8+nJL5jzmePwD88E4MCeasTgAAAABJRU5ErkJggg==">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Memo Calendar">
 <meta name="theme-color" content="#5b6ef5">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%235b6ef5'/%3E%3Crect x='42' y='52' width='96' height='86' rx='14' fill='white' fill-opacity='0.2'/%3E%3Crect x='42' y='52' width='96' height='86' rx='14' stroke='white' stroke-width='5.5' fill='none'/%3E%3Cpath d='M68 36v26M112 36v26' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3Cpath d='M42 76h96' stroke='white' stroke-width='5.5'/%3E%3Crect x='58' y='92' width='20' height='20' rx='3' fill='white'/%3E%3Crect x='88' y='92' width='20' height='20' rx='3' fill='white'/%3E%3C/svg%3E">
-
-<!-- PWA Manifest -->
-
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Memo Calendar%22%2C%22short_name%22%3A%22Memo Cal%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23eef1f8%22%2C%22theme_color%22%3A%22%235b6ef5%22%7D">
 
 </head>
 <body>
