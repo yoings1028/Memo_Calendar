@@ -494,6 +494,12 @@ body { font-family: 'Sunchon', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
   </div>
   
 
+  <!-- 토큰 만료 배너 -->
+  <div id="token-banner" style="display:none;background:#fff3cd;border-bottom:1px solid #ffc107;padding:8px 16px;font-size:12px;color:#856404;display:none;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0">
+    <span>⚠️ 구글 연결이 끊겼어요. 다시 연결하면 일정과 데이터가 동기화돼요.</span>
+    <button onclick="reconnectAll()" style="background:#ffc107;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700;white-space:nowrap">다시 연결</button>
+  </div>
+
   <div class="toolbar">
     <div class="period-nav">
       <button class="nav-btn" onclick="navigate(-1)">‹</button>
@@ -732,8 +738,12 @@ let driveFileId = localStorage.getItem('drive_memo_file_id') || null;
 
 async function getDriveToken() {
   const acc = accounts.find(a => a.type === 'personal') || accounts[0];
-  if (!acc || !acc.token) return null;
-  return acc.token; // 토큰 있으면 바로 사용, 만료시 API에서 401 반환
+  if (!acc || !acc.token) {
+    console.warn('getDriveToken: 토큰 없음');
+    showTokenBanner();
+    return null;
+  }
+  return acc.token;
 }
 
 async function saveMemosToDrive() {
@@ -793,7 +803,7 @@ async function saveTodosToDrive() {
         console.warn('투두 드라이브 업데이트 실패, 파일 재생성 시도', r.status);
         todoFileId = null;
         localStorage.removeItem('drive_todo_file_id');
-        if (r.status !== 401) await saveTodosToDrive(); // 401이면 재시도 안함
+        if (r.status === 401) showTokenBanner(); else await saveTodosToDrive();
       }
     } else {
       const meta = await fetch('https://www.googleapis.com/drive/v3/files', {
@@ -815,7 +825,7 @@ async function saveTodosToDrive() {
 
 async function loadTodosFromDrive() {
   const token = await getDriveToken();
-  if (!token) { console.warn('loadTodosFromDrive: 토큰 없음'); return; }
+  if (!token) return;
   console.log('loadTodosFromDrive: 시작');
   const TODOS_FILENAME = 'memo_calendar_todos.json';
   try {
@@ -1177,6 +1187,50 @@ function renderPresetColors() {
   });
 }
 
+function showTokenBanner() {
+  const banner = document.getElementById('token-banner');
+  if (banner) banner.style.display = 'flex';
+}
+
+function hideTokenBanner() {
+  const banner = document.getElementById('token-banner');
+  if (banner) banner.style.display = 'none';
+}
+
+function reconnectAll() {
+  // 모든 계정 순서대로 재연결
+  const toReconnect = [...accounts];
+  hideTokenBanner();
+  function reconnectNext(i) {
+    if (i >= toReconnect.length) return;
+    const acc = toReconnect[i];
+    loadGoogleScript(() => {
+      try {
+        const tc = google.accounts.oauth2.initTokenClient({
+          client_id: CLIENT_ID,
+          scope: SCOPES,
+          hint: acc.email,
+          callback: (resp) => {
+            if (!resp.error && resp.access_token) {
+              acc.token = resp.access_token;
+              const tokensOnly = accounts.reduce((obj, a) => { if(a.token) obj[a.type]=a.token; return obj; }, {});
+              try { sessionStorage.setItem('cal_tokens', JSON.stringify(tokensOnly)); } catch(e) {}
+              window._calTokens = tokensOnly;
+              fetchCalendarEvents(acc.type, resp.access_token);
+              if (acc.type === 'personal') {
+                setTimeout(() => { loadMemosFromDrive(); loadTodosFromDrive(); }, 500);
+              }
+            }
+            reconnectNext(i + 1);
+          }
+        });
+        tc.requestAccessToken({ prompt: 'select_account' });
+      } catch(e) { reconnectNext(i + 1); }
+    });
+  }
+  reconnectNext(0);
+}
+
 function closeProfileMenu() {
   const m1 = document.getElementById('profile-menu');
   const m2 = document.getElementById('profile-menu-mobile');
@@ -1254,8 +1308,8 @@ if (accounts.length > 0) {
                 const tokensOnly = accounts.reduce((obj, a) => { if(a.token) obj[a.type]=a.token; return obj; }, {});
                 try { sessionStorage.setItem('cal_tokens', JSON.stringify(tokensOnly)); } catch(e) {}
                 window._calTokens = tokensOnly;
+                hideTokenBanner();
                 fetchCalendarEvents(acc.type, resp.access_token);
-                // 토큰 확보 후 드라이브 데이터 로드 (개인 계정 토큰으로만)
                 if (acc.type === 'personal') {
                   setTimeout(() => { loadMemosFromDrive(); loadTodosFromDrive(); }, 500);
                 }
@@ -1263,7 +1317,10 @@ if (accounts.length > 0) {
             }
           });
           tc.requestAccessToken({ prompt: '' });
-        } catch(e) { console.warn('Silent 로그인 실패:', e); }
+        } catch(e) {
+          console.warn('Silent 로그인 실패:', e);
+          showTokenBanner();
+        }
       });
 
     });
