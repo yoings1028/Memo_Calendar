@@ -655,7 +655,7 @@ body { font-family: 'Sunchon', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
   <!-- 빠른 추가 -->
   <div class="todo-panel-quick">
     <input type="text" id="todo-panel-quick-text" placeholder="빠른 추가 후 Enter..."
-      onkeydown="if(event.key==='Enter')panelQuickAddTodo()">
+      onkeydown="if(event.key==='Enter')panelQuickAddTodo()" maxlength="100">
     <select id="todo-panel-quick-account" class="todo-select" style="margin-top:6px;width:100%">
       <option value="personal">개인</option>
       <option value="work">업무</option>
@@ -1382,59 +1382,48 @@ function showApp() {
 
 initTheme();
 if (accounts.length > 0) {
-  // 토큰이 있으면 바로 앱 표시, 없으면 silent 재로그인 시도
-  const hasToken = accounts.some(a => a.token);
-  if (hasToken) {
-    showApp();
-  } else {
-    // 저장된 계정이 있지만 토큰 없음 -> 자동 silent 로그인 시도
-    showApp(); // 일단 앱 표시
-    loadGoogleScript(() => {
-      accounts.forEach(acc => {
-        try {
-          const tc = google.accounts.oauth2.initTokenClient({
-            client_id: CLIENT_ID,
-            scope: SCOPES,
-            prompt: '', // silent - 화면 없이 시도
-            hint: acc.email,
-            callback: (resp) => {
-              if (!resp.error && resp.access_token) {
-                acc.token = resp.access_token;
-                const tokensOnly = accounts.reduce((obj, a) => { if(a.token) obj[a.type]=a.token; return obj; }, {});
-                try { sessionStorage.setItem('cal_tokens', JSON.stringify(tokensOnly)); } catch(e) {}
-                window._calTokens = tokensOnly;
-                hideTokenBanner();
-                fetchCalendarEvents(acc.type, resp.access_token);
-                scheduleTokenRefresh(acc.type, acc.email, 45 * 60 * 1000);
-                if (acc.type === 'personal') {
-                  setTimeout(async () => {
-                    // 오프라인 큐 처리 - 로컬 변경사항 먼저 드라이브에 올림
-                    if (offlineQueue.memos) {
-                      console.log('오프라인 큐: 메모 드라이브 동기화');
-                      await saveMemosToDrive();
-                    }
-                    if (offlineQueue.todos) {
-                      console.log('오프라인 큐: 투두 드라이브 동기화');
-                      await saveTodosToDrive();
-                    }
-                    // 그 후 드라이브에서 최신 데이터 불러오기
-                    // (다른 기기에서 추가된 것도 병합)
-                    if (!offlineQueue.memos) await loadMemosFromDrive();
-                    if (!offlineQueue.todos) await loadTodosFromDrive();
-                  }, 500);
-                }
+  // 저장된 계정 있으면 바로 앱 표시
+  showApp();
+  // 앱 시작 즉시 silent 토큰 갱신 (팝업 없음)
+  loadGoogleScript(() => {
+    accounts.forEach(acc => {
+      try {
+        const tc = google.accounts.oauth2.initTokenClient({
+          client_id: CLIENT_ID,
+          scope: SCOPES,
+          prompt: '',
+          hint: acc.email,
+          callback: async (resp) => {
+            if (!resp.error && resp.access_token) {
+              acc.token = resp.access_token;
+              const tokensOnly = accounts.reduce((obj, a) => { if(a.token) obj[a.type]=a.token; return obj; }, {});
+              try { sessionStorage.setItem('cal_tokens', JSON.stringify(tokensOnly)); } catch(e) {}
+              window._calTokens = tokensOnly;
+              hideTokenBanner();
+              fetchCalendarEvents(acc.type, resp.access_token);
+              scheduleTokenRefresh(acc.type, acc.email, 45 * 60 * 1000);
+              // 개인 계정 토큰으로 드라이브 동기화
+              if (acc.type === 'personal') {
+                await new Promise(r => setTimeout(r, 500));
+                if (offlineQueue.memos) await saveMemosToDrive();
+                else await loadMemosFromDrive();
+                if (offlineQueue.todos) await saveTodosToDrive();
+                else await loadTodosFromDrive();
               }
+            } else {
+              // silent 갱신 실패 - 기존 토큰 없으면 배너만 표시
+              if (!acc.token) showTokenBanner();
+              console.warn('시작 시 silent 갱신 실패:', acc.type, resp?.error);
             }
-          });
-          tc.requestAccessToken({ prompt: '' });
-        } catch(e) {
-          console.warn('Silent 로그인 실패:', e);
-          showTokenBanner();
-        }
-      });
-
+          }
+        });
+        tc.requestAccessToken({ prompt: '' });
+      } catch(e) {
+        if (!acc.token) showTokenBanner();
+        console.warn('시작 시 토큰 갱신 오류:', e);
+      }
     });
-  }
+  });
 }
 
 function visibleEvents() {
