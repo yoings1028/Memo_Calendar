@@ -697,7 +697,7 @@ body { font-family: 'Sunchon', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 // =====================================================
 // ⚠️ 클라이언트 ID를 여기에 입력하세요
 // =====================================================
-const CLIENT_ID = 89624804757-04d1eqmkmfl4fc04c03a3cjejovb36h8.apps.googleusercontent.com';
+const CLIENT_ID = '89624804757-04d1eqmkmfl4fc04c03a3cjejovb36h8.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.appdata';
 
 let accounts = JSON.parse(localStorage.getItem('cal_accounts') || '[]'); // 토큰은 로그인 시 메모리에만 저장
@@ -1230,7 +1230,38 @@ function showApp() {
 }
 
 initTheme();
-if (accounts.length > 0) showApp();
+if (accounts.length > 0) {
+  // 토큰이 있으면 바로 앱 표시, 없으면 silent 재로그인 시도
+  const hasToken = accounts.some(a => a.token);
+  if (hasToken) {
+    showApp();
+  } else {
+    // 저장된 계정이 있지만 토큰 없음 -> 자동 silent 로그인 시도
+    showApp(); // 일단 앱 표시
+    loadGoogleScript(() => {
+      accounts.forEach(acc => {
+        try {
+          const tc = google.accounts.oauth2.initTokenClient({
+            client_id: CLIENT_ID,
+            scope: SCOPES,
+            prompt: '', // silent - 화면 없이 시도
+            hint: acc.email,
+            callback: (resp) => {
+              if (!resp.error && resp.access_token) {
+                acc.token = resp.access_token;
+                const tokensOnly = accounts.reduce((obj, a) => { if(a.token) obj[a.type]=a.token; return obj; }, {});
+                try { sessionStorage.setItem('cal_tokens', JSON.stringify(tokensOnly)); } catch(e) {}
+                window._calTokens = tokensOnly;
+                fetchCalendarEvents(acc.type, resp.access_token);
+              }
+            }
+          });
+          tc.requestAccessToken({ prompt: '' });
+        } catch(e) { console.warn('Silent 로그인 실패:', e); }
+      });
+    });
+  }
+}
 
 function visibleEvents() {
   return events
