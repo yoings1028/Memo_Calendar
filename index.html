@@ -777,7 +777,8 @@ async function saveMemosToDrive() {
 
 async function saveTodosToDrive() {
   const token = await getDriveToken();
-  if (!token) return;
+  if (!token) { console.warn('saveTodosToDrive: 토큰 없음'); return; }
+  console.log('saveTodosToDrive: 저장 시작', todos.length, '개');
   const TODOS_FILENAME = 'memo_calendar_todos.json';
   let todoFileId = localStorage.getItem('drive_todo_file_id') || null;
   const data = JSON.stringify(todos);
@@ -814,7 +815,8 @@ async function saveTodosToDrive() {
 
 async function loadTodosFromDrive() {
   const token = await getDriveToken();
-  if (!token) return;
+  if (!token) { console.warn('loadTodosFromDrive: 토큰 없음'); return; }
+  console.log('loadTodosFromDrive: 시작');
   const TODOS_FILENAME = 'memo_calendar_todos.json';
   try {
     const list = await fetch(
@@ -1253,17 +1255,17 @@ if (accounts.length > 0) {
                 try { sessionStorage.setItem('cal_tokens', JSON.stringify(tokensOnly)); } catch(e) {}
                 window._calTokens = tokensOnly;
                 fetchCalendarEvents(acc.type, resp.access_token);
+                // 토큰 확보 후 드라이브 데이터 로드 (개인 계정 토큰으로만)
+                if (acc.type === 'personal') {
+                  setTimeout(() => { loadMemosFromDrive(); loadTodosFromDrive(); }, 500);
+                }
               }
             }
           });
           tc.requestAccessToken({ prompt: '' });
         } catch(e) { console.warn('Silent 로그인 실패:', e); }
       });
-      // silent 로그인 후 드라이브 데이터 불러오기
-      setTimeout(() => {
-        loadMemosFromDrive();
-        loadTodosFromDrive();
-      }, 2000);
+
     });
   }
 }
