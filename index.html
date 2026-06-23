@@ -1228,7 +1228,14 @@ function silentRefreshToken(type, email) {
         client_id: CLIENT_ID,
         scope: SCOPES,
         hint: email,
-        prompt: '',
+        prompt: 'none',  // 완전 silent - 팝업/리디렉션 없음
+        error_callback: (err) => {
+          // 'user_logged_out' 등 silent 불가 시 조용히 실패
+          console.warn('Silent 갱신 불가:', err.type);
+          // 팝업 없이 실패 -> 토큰 있으면 계속 사용, 없으면 배너
+          const acc = accounts.find(a => a.type === type);
+          if (!acc || !acc.token) showTokenBanner();
+        },
         callback: (resp) => {
           if (!resp.error && resp.access_token) {
             const acc = accounts.find(a => a.type === type);
@@ -1391,8 +1398,12 @@ if (accounts.length > 0) {
         const tc = google.accounts.oauth2.initTokenClient({
           client_id: CLIENT_ID,
           scope: SCOPES,
-          prompt: '',
+          prompt: 'none',  // 팝업 없이 silent 갱신
           hint: acc.email,
+          error_callback: (err) => {
+            console.warn('시작 시 silent 불가:', err.type);
+            if (!acc.token) showTokenBanner();
+          },
           callback: async (resp) => {
             if (!resp.error && resp.access_token) {
               acc.token = resp.access_token;
