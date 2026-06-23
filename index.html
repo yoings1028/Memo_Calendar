@@ -728,6 +728,7 @@ let nextId = parseInt(localStorage.getItem('cal_nextid') || '1');
 let postitPositions = JSON.parse(localStorage.getItem('postit_pos') || '{}');
 let allHidden = false;
 let todos = JSON.parse(localStorage.getItem('cal_todos') || '[]');
+let offlineQueue = JSON.parse(localStorage.getItem('offline_queue') || '{"memos":false,"todos":false}');
 
 const today = new Date();
 const todayStr = fmtDate(today);
@@ -748,7 +749,13 @@ async function getDriveToken() {
 
 async function saveMemosToDrive() {
   const token = await getDriveToken();
-  if (!token) return;
+  if (!token) {
+    // 토큰 없으면 오프라인 큐에 등록
+    offlineQueue.memos = true;
+    localStorage.setItem('offline_queue', JSON.stringify(offlineQueue));
+    console.log('saveMemosToDrive: 오프라인 큐 등록');
+    return;
+  }
   const data = JSON.stringify(memos);
 
   try {
@@ -780,14 +787,21 @@ async function saveMemosToDrive() {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: data
       });
-      console.log('드라이브 저장 완료:', driveFileId);
+      console.log('드라이브 메모 저장 완료:', driveFileId);
+      offlineQueue.memos = false;
+      localStorage.setItem('offline_queue', JSON.stringify(offlineQueue));
     }
   } catch(e) { console.error('드라이브 저장 실패:', e); }
 }
 
 async function saveTodosToDrive() {
   const token = await getDriveToken();
-  if (!token) { console.warn('saveTodosToDrive: 토큰 없음'); return; }
+  if (!token) {
+    offlineQueue.todos = true;
+    localStorage.setItem('offline_queue', JSON.stringify(offlineQueue));
+    console.log('saveTodosToDrive: 오프라인 큐 등록');
+    return;
+  }
   console.log('saveTodosToDrive: 저장 시작', todos.length, '개');
   const TODOS_FILENAME = 'memo_calendar_todos.json';
   let todoFileId = localStorage.getItem('drive_todo_file_id') || null;
@@ -800,10 +814,13 @@ async function saveTodosToDrive() {
         body: data
       });
       if (!r.ok) {
-        console.warn('투두 드라이브 업데이트 실패, 파일 재생성 시도', r.status);
+        console.warn('투두 드라이브 업데이트 실패', r.status);
         todoFileId = null;
         localStorage.removeItem('drive_todo_file_id');
         if (r.status === 401) showTokenBanner(); else await saveTodosToDrive();
+      } else {
+        offlineQueue.todos = false;
+        localStorage.setItem('offline_queue', JSON.stringify(offlineQueue));
       }
     } else {
       const meta = await fetch('https://www.googleapis.com/drive/v3/files', {
@@ -891,8 +908,8 @@ function save() {
   // 토큰을 sessionStorage에 저장 (탭/앱 종료 시 삭제)
   const tokensOnly = accounts.reduce((obj, a) => { if(a.token) obj[a.type]=a.token; return obj; }, {});
   try { sessionStorage.setItem('cal_tokens', JSON.stringify(tokensOnly)); } catch(e) {}
-  // PWA 대비: 짧은 시간 동안 메모리 유지용 플래그
   window._calTokens = tokensOnly;
+  localStorage.setItem('offline_queue', JSON.stringify(offlineQueue));
   localStorage.setItem('cal_events', JSON.stringify(events));
   localStorage.setItem('cal_memos', JSON.stringify(memos));
   localStorage.setItem('cal_todos', JSON.stringify(todos));
@@ -951,6 +968,8 @@ function signIn(type) {
           save();
           showApp();
           fetchCalendarEvents(type, resp.access_token);
+          // 로그인 성공 후 45분 후 자동 갱신 예약
+          scheduleTokenRefresh(type, email, 45 * 60 * 1000);
         })
         .catch(() => {
           const email = prompt(`${type === 'personal' ? '개인' : '업무'} 계정 이메일:`);
@@ -961,6 +980,8 @@ function signIn(type) {
           save();
           showApp();
           fetchCalendarEvents(type, resp.access_token);
+          // 로그인 성공 후 45분 후 자동 갱신 예약
+          scheduleTokenRefresh(type, email, 45 * 60 * 1000);
         });
       }
     });
@@ -1187,6 +1208,70 @@ function renderPresetColors() {
   });
 }
 
+// ── 토큰 자동 갱신 ──
+let tokenRefreshTimers = {};
+
+function scheduleTokenRefresh(type, email, delayMs) {
+  // 기존 타이머 취소
+  if (tokenRefreshTimers[type]) clearTimeout(tokenRefreshTimers[type]);
+  // delayMs 후 silent 갱신 (만료 5분 전에 갱신)
+  tokenRefreshTimers[type] = setTimeout(() => {
+    silentRefreshToken(type, email);
+  }, delayMs);
+  console.log(`토큰 자동갱신 예약: ${type} (${Math.round(delayMs/60000)}분 후)`);
+}
+
+function silentRefreshToken(type, email) {
+  loadGoogleScript(() => {
+    try {
+      const tc = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        hint: email,
+        prompt: '',
+        callback: (resp) => {
+          if (!resp.error && resp.access_token) {
+            const acc = accounts.find(a => a.type === type);
+            if (acc) {
+              acc.token = resp.access_token;
+              const tokensOnly = accounts.reduce((obj, a) => { if(a.token) obj[a.type]=a.token; return obj; }, {});
+              try { sessionStorage.setItem('cal_tokens', JSON.stringify(tokensOnly)); } catch(e) {}
+              window._calTokens = tokensOnly;
+              hideTokenBanner();
+              console.log(`토큰 자동갱신 성공: ${type}`);
+              // 오프라인 큐 처리
+              if (type === 'personal') {
+                setTimeout(async () => {
+                  if (offlineQueue.memos) await saveMemosToDrive();
+                  if (offlineQueue.todos) await saveTodosToDrive();
+                }, 300);
+              }
+              // 45분 후 다시 갱신 예약 (토큰 유효시간 60분 기준)
+              scheduleTokenRefresh(type, email, 45 * 60 * 1000);
+            }
+          } else {
+            console.warn(`토큰 자동갱신 실패: ${type}`, resp.error);
+            showTokenBanner();
+          }
+        }
+      });
+      tc.requestAccessToken({ prompt: '' });
+    } catch(e) {
+      console.warn('토큰 갱신 오류:', e);
+      showTokenBanner();
+    }
+  });
+}
+
+function startAutoRefresh() {
+  accounts.forEach(acc => {
+    if (acc.email) {
+      // 앱 시작 후 50분마다 갱신 (즉시 첫 갱신 후 45분 주기)
+      scheduleTokenRefresh(acc.type, acc.email, 50 * 60 * 1000);
+    }
+  });
+}
+
 function showTokenBanner() {
   const banner = document.getElementById('token-banner');
   if (banner) banner.style.display = 'flex';
@@ -1282,7 +1367,17 @@ function showApp() {
   initTheme();
   render();
   renderAllPostits();
-  setTimeout(() => { loadMemosFromDrive(); loadTodosFromDrive(); }, 2000);
+  // 자동 토큰 갱신 시작 (45분 주기)
+  startAutoRefresh();
+
+  setTimeout(async () => {
+    const token = await getDriveToken().catch(() => null);
+    if (!token) return;
+    if (offlineQueue.memos) await saveMemosToDrive();
+    else await loadMemosFromDrive();
+    if (offlineQueue.todos) await saveTodosToDrive();
+    else await loadTodosFromDrive();
+  }, 2000);
 }
 
 initTheme();
@@ -1310,8 +1405,23 @@ if (accounts.length > 0) {
                 window._calTokens = tokensOnly;
                 hideTokenBanner();
                 fetchCalendarEvents(acc.type, resp.access_token);
+                scheduleTokenRefresh(acc.type, acc.email, 45 * 60 * 1000);
                 if (acc.type === 'personal') {
-                  setTimeout(() => { loadMemosFromDrive(); loadTodosFromDrive(); }, 500);
+                  setTimeout(async () => {
+                    // 오프라인 큐 처리 - 로컬 변경사항 먼저 드라이브에 올림
+                    if (offlineQueue.memos) {
+                      console.log('오프라인 큐: 메모 드라이브 동기화');
+                      await saveMemosToDrive();
+                    }
+                    if (offlineQueue.todos) {
+                      console.log('오프라인 큐: 투두 드라이브 동기화');
+                      await saveTodosToDrive();
+                    }
+                    // 그 후 드라이브에서 최신 데이터 불러오기
+                    // (다른 기기에서 추가된 것도 병합)
+                    if (!offlineQueue.memos) await loadMemosFromDrive();
+                    if (!offlineQueue.todos) await loadTodosFromDrive();
+                  }, 500);
                 }
               }
             }
