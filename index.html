@@ -340,18 +340,9 @@ body { font-family: 'Sunchon', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 }
 </style>
 <style>
-  #credential_picker_container,
-  #credential_picker_iframe,
-  div[id^="gsi_"],
-  iframe[src*="accounts.google.com"] {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-    position: fixed !important;
-    top: -9999px !important;
-    left: -9999px !important;
-  }
+  /* GIS silent 갱신 iframe 숨기기 - 구체적 ID만 타겟 */
+  #credential_picker_container { display: none !important; }
+  div[id^="gsi_"] { position: fixed !important; top: -9999px !important; left: -9999px !important; opacity: 0 !important; pointer-events: none !important; }
 </style>
 </head>
 <body>
@@ -1485,9 +1476,15 @@ function setView(v) {
 function miniNav(dir) { miniCurrent.setMonth(miniCurrent.getMonth() + dir); renderMini(); }
 
 function render() {
-  renderChips(); renderAccounts(); renderMemosSidebar(); renderMini();
-  renderTodos();
-  if (currentView === 'month') renderMonth(); else renderWeek();
+  try {
+    renderChips(); renderAccounts(); renderMemosSidebar(); renderMini();
+    renderTodos();
+    if (currentView === 'month') renderMonth(); else renderWeek();
+  } catch(e) {
+    console.error('render 오류:', e);
+    const ca = document.getElementById('cal-area');
+    if (ca) ca.innerHTML = '<div style="padding:20px;color:red">렌더링 오류: ' + escapeHtml(e.message) + '</div>';
+  }
 }
 
 function renderChips() {
@@ -2130,6 +2127,7 @@ function startDragTouch(e, id) {
 // ── 투두리스트 로직 ──
 let editingTodoId = null;
 let showCompleted = false;
+let showPanelCompleted = false;
 
 function focusTodoInput() {
   const el = document.getElementById('todo-quick-input');
@@ -2218,8 +2216,6 @@ function toggleCompletedTodos() {
   showCompleted = !showCompleted;
   renderTodos();
 }
-
-let showPanelCompleted = false;
 
 function renderTodos() {
   const today = fmtDate(new Date());
