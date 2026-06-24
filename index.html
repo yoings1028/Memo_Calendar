@@ -413,7 +413,7 @@ body { font-family: 'SUIT', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-
               onclick="document.getElementById('profile-img-input-pc').click()">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
             </div>
-            <input type="file" id="profile-img-input-pc" accept="image/*" onchange="setProfileImage(this)">
+            <input type="file" id="profile-img-input-pc" accept="image/*" onchange="setProfileImage(this)" style="display:none">
             <div class="profile-img-label" id="profile-img-label-pc">프로필 설정</div>
             <button class="profile-img-remove" id="profile-img-remove-pc"
               onclick="removeProfileImage()">이미지 제거</button>
@@ -470,7 +470,7 @@ body { font-family: 'SUIT', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-
                 onclick="document.getElementById('profile-img-input-mob').click()">
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
               </div>
-              <input type="file" id="profile-img-input-mob" accept="image/*" onchange="setProfileImage(this)">
+              <input type="file" id="profile-img-input-mob" accept="image/*" onchange="setProfileImage(this)" style="display:none">
               <div class="profile-img-label" id="profile-img-label-mob">프로필 설정</div>
               <button class="profile-img-remove" id="profile-img-remove-mob"
                 onclick="removeProfileImage()">이미지 제거</button>
