@@ -695,6 +695,40 @@ body { font-family: 'SUIT', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-
   </div>
 </div>
 
+<!-- 이미지 크롭 모달 -->
+<div class="overlay" id="crop-overlay">
+  <div class="modal" style="max-width:360px;padding:20px">
+    <div class="modal-head">
+      <h3>프로필 이미지 설정</h3>
+      <button class="close-btn" onclick="closeCropModal()">×</button>
+    </div>
+    <div style="position:relative;width:100%;aspect-ratio:1;background:#111;border-radius:12px;overflow:hidden;touch-action:none" id="crop-container">
+      <img id="crop-img" style="position:absolute;cursor:move;user-select:none;-webkit-user-drag:none" draggable="false">
+      <!-- 원형 마스크 오버레이 -->
+      <div id="crop-mask" style="position:absolute;inset:0;pointer-events:none">
+        <svg width="100%" height="100%" style="position:absolute;inset:0">
+          <defs>
+            <mask id="hole">
+              <rect width="100%" height="100%" fill="white"/>
+              <circle id="crop-circle" cx="50%" cy="50%" r="42%" fill="black"/>
+            </mask>
+          </defs>
+          <rect width="100%" height="100%" fill="rgba(0,0,0,0.55)" mask="url(#hole)"/>
+          <circle cx="50%" cy="50%" r="42%" fill="none" stroke="white" stroke-width="2" stroke-dasharray="6 4" opacity="0.8"/>
+        </svg>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--text-hint);text-align:center;margin:10px 0 4px">드래그하여 위치 조정 · 핀치로 확대/축소</p>
+    <input type="range" id="crop-zoom" min="1" max="3" step="0.01" value="1"
+      style="width:100%;margin-bottom:14px;accent-color:var(--accent)"
+      oninput="cropZoom(this.value)">
+    <div class="modal-footer">
+      <button class="btn" onclick="closeCropModal()">취소</button>
+      <button class="btn primary" onclick="applyCrop()">적용</button>
+    </div>
+  </div>
+</div>
+
 <!-- 투두 모달 -->
 <div class="overlay" id="todo-overlay">
   <div class="modal">
@@ -1094,8 +1128,9 @@ function fetchCalendarEvents(type, token) {
 function toggleProfileMenu() {
   const menu = document.getElementById('profile-menu');
   const isOpen = menu.classList.contains('open');
-  closeProfileMenu();
-  if (!isOpen) {
+  if (isOpen) {
+    closeProfileMenu();
+  } else {
     menu.classList.add('open');
     updateProfileMenu();
     renderPresetColors();
@@ -1439,37 +1474,153 @@ function applyProfileImage() {
   }
 }
 
+// ── 이미지 크롭 ──
+let cropState = { imgEl: null, scale: 1, x: 0, y: 0, dragging: false, startX: 0, startY: 0, imgW: 0, imgH: 0, contW: 0, contH: 0 };
+
 function setProfileImage(input) {
   const file = input.files[0];
   if (!file) return;
-  // 크기 제한: 2MB
-  if (file.size > 2 * 1024 * 1024) {
-    alert('이미지 크기는 2MB 이하로 설정해주세요.');
-    return;
-  }
+  if (file.size > 5 * 1024 * 1024) { alert('이미지 크기는 5MB 이하로 설정해주세요.'); return; }
   const reader = new FileReader();
-  reader.onload = (e) => {
-    // 이미지 리사이즈 (100x100으로 줄여서 저장)
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 100; canvas.height = 100;
-      const ctx = canvas.getContext('2d');
-      // 중앙 크롭
-      const size = Math.min(img.width, img.height);
-      const sx = (img.width - size) / 2;
-      const sy = (img.height - size) / 2;
-      ctx.drawImage(img, sx, sy, size, size, 0, 0, 100, 100);
-      profileImageData = canvas.toDataURL('image/jpeg', 0.8);
-      localStorage.setItem('profile_image', profileImageData);
-      applyProfileImage();
-      saveProfileToDrive(profileImageData); // 드라이브 동기화
-    };
-    img.src = e.target.result;
-  };
+  reader.onload = (e) => openCropModal(e.target.result);
   reader.readAsDataURL(file);
-  // input 초기화 (같은 파일 재선택 가능하게)
   input.value = '';
+}
+
+function openCropModal(src) {
+  closeProfileMenu();
+  const overlay = document.getElementById('crop-overlay');
+  const img = document.getElementById('crop-img');
+  const container = document.getElementById('crop-container');
+  img.src = src;
+  img.onload = () => {
+    const contW = container.offsetWidth;
+    const contH = container.offsetHeight;
+    const iw = img.naturalWidth, ih = img.naturalHeight;
+    // 원에 꽉 차도록 초기 스케일
+    const r = Math.min(contW, contH) * 0.42;
+    const minDim = Math.min(iw, ih);
+    const initScale = (r * 2) / minDim;
+    cropState = { imgEl: img, scale: initScale, x: 0, y: 0,
+      dragging: false, startX: 0, startY: 0, startImgX: 0, startImgY: 0,
+      imgW: iw, imgH: ih, contW, contH };
+    document.getElementById('crop-zoom').value = initScale;
+    document.getElementById('crop-zoom').min = initScale;
+    document.getElementById('crop-zoom').max = initScale * 4;
+    updateCropImg();
+    setupCropEvents(container);
+  };
+  overlay.classList.add('open');
+}
+
+function closeCropModal() {
+  document.getElementById('crop-overlay').classList.remove('open');
+}
+
+function updateCropImg() {
+  const { imgEl, scale, x, y, contW, contH, imgW, imgH } = cropState;
+  const w = imgW * scale, h = imgH * scale;
+  // 위치 제한 (원 밖으로 이미지가 나가지 않도록)
+  const r = Math.min(contW, contH) * 0.42;
+  const cx = contW / 2, cy = contH / 2;
+  const clampX = Math.min(cx - r, Math.max(cx + r - w, x));
+  const clampY = Math.min(cy - r, Math.max(cy + r - h, y));
+  cropState.x = clampX; cropState.y = clampY;
+  imgEl.style.width = w + 'px';
+  imgEl.style.height = h + 'px';
+  imgEl.style.left = clampX + 'px';
+  imgEl.style.top = clampY + 'px';
+}
+
+function cropZoom(val) {
+  const s = parseFloat(val);
+  const { contW, contH, x, y, scale } = cropState;
+  // 중심 기준으로 줌
+  const cx = contW / 2, cy = contH / 2;
+  const ratio = s / scale;
+  cropState.scale = s;
+  cropState.x = cx - (cx - x) * ratio;
+  cropState.y = cy - (cy - y) * ratio;
+  updateCropImg();
+}
+
+function setupCropEvents(container) {
+  // 기존 리스너 제거
+  container.onmousedown = (e) => {
+    e.preventDefault();
+    cropState.dragging = true;
+    cropState.startX = e.clientX - cropState.x;
+    cropState.startY = e.clientY - cropState.y;
+  };
+  container.onmousemove = (e) => {
+    if (!cropState.dragging) return;
+    cropState.x = e.clientX - cropState.startX;
+    cropState.y = e.clientY - cropState.startY;
+    updateCropImg();
+  };
+  container.onmouseup = () => { cropState.dragging = false; };
+  container.onmouseleave = () => { cropState.dragging = false; };
+
+  // 터치
+  let lastDist = 0;
+  container.ontouchstart = (e) => {
+    if (e.touches.length === 1) {
+      cropState.dragging = true;
+      cropState.startX = e.touches[0].clientX - cropState.x;
+      cropState.startY = e.touches[0].clientY - cropState.y;
+    } else if (e.touches.length === 2) {
+      lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                             e.touches[0].clientY - e.touches[1].clientY);
+    }
+  };
+  container.ontouchmove = (e) => {
+    e.preventDefault();
+    if (e.touches.length === 1 && cropState.dragging) {
+      cropState.x = e.touches[0].clientX - cropState.startX;
+      cropState.y = e.touches[0].clientY - cropState.startY;
+      updateCropImg();
+    } else if (e.touches.length === 2) {
+      const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                               e.touches[0].clientY - e.touches[1].clientY);
+      const ratio = dist / lastDist;
+      const newScale = Math.max(parseFloat(document.getElementById('crop-zoom').min),
+                                Math.min(cropState.scale * ratio, parseFloat(document.getElementById('crop-zoom').max)));
+      const { contW, contH, x, y, scale } = cropState;
+      const cx = contW / 2, cy = contH / 2;
+      const r2 = newScale / scale;
+      cropState.x = cx - (cx - x) * r2;
+      cropState.y = cy - (cy - y) * r2;
+      cropState.scale = newScale;
+      document.getElementById('crop-zoom').value = newScale;
+      lastDist = dist;
+      updateCropImg();
+    }
+  };
+  container.ontouchend = () => { cropState.dragging = false; };
+}
+
+function applyCrop() {
+  const { imgEl, scale, x, y, contW, contH } = cropState;
+  const r = Math.min(contW, contH) * 0.42;
+  const cx = contW / 2, cy = contH / 2;
+  // 원 영역을 캔버스에 그리기
+  const size = 200;
+  const canvas = document.createElement('canvas');
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.beginPath();
+  ctx.arc(size/2, size/2, size/2, 0, Math.PI*2);
+  ctx.clip();
+  // 이미지의 원 영역 → 캔버스 매핑
+  const srcX = (cx - r - x) / scale;
+  const srcY = (cy - r - y) / scale;
+  const srcSize = (r * 2) / scale;
+  ctx.drawImage(imgEl, srcX, srcY, srcSize, srcSize, 0, 0, size, size);
+  profileImageData = canvas.toDataURL('image/jpeg', 0.85);
+  localStorage.setItem('profile_image', profileImageData);
+  applyProfileImage();
+  saveProfileToDrive(profileImageData);
+  closeCropModal();
 }
 
 function removeProfileImage() {
@@ -1529,6 +1680,8 @@ function toggleMobileProfileMenu() {
 }
 
 document.addEventListener('click', e => {
+  // profile-btn 클릭은 toggleProfileMenu가 처리하므로 여기서 무시
+  if (e.target.closest('#profile-btn')) return;
   // 모든 profile-wrap 확인
   const wraps = document.querySelectorAll('.profile-wrap');
   let insideWrap = false;
