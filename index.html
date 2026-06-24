@@ -53,7 +53,7 @@
   --shadow: 0 2px 12px rgba(0,0,0,0.4); --shadow-md: 0 4px 24px rgba(0,0,0,0.5);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Sunchon', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+body { font-family: 'OngleipKonkon', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
 
 /* 로그인 */
 #login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: linear-gradient(135deg, #e8ecf8 0%, #f0eefa 100%); }
@@ -236,7 +236,7 @@ body { font-family: 'Sunchon', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 .postit-actions { display: flex; gap: 4px; }
 .postit-btn { background: none; border: none; cursor: pointer; color: rgba(0,0,0,0.35); font-size: 14px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.12s, color 0.12s; padding: 0; }
 .postit-btn:hover { background: rgba(0,0,0,0.1); color: rgba(0,0,0,0.7); }
-.postit-body { flex: 1; padding: 2px 12px 14px; font-size: 13px; line-height: 1.6; color: rgba(0,0,0,0.75); white-space: pre-wrap; word-break: break-word; font-family: 'Sunchon', sans-serif; min-height: 80px; }
+.postit-body { flex: 1; padding: 2px 12px 14px; font-size: 13px; line-height: 1.6; color: rgba(0,0,0,0.75); white-space: pre-wrap; word-break: break-word; font-family: 'OngleipKonkon', sans-serif; min-height: 80px; }
 .postit-fold-line { display: none; }
 #postit-toggle { position: fixed; bottom: 20px; right: 20px; width: 42px; height: 42px; border-radius: 50%; background: var(--accent); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 12px rgba(0,0,0,0.15); z-index: 160; transition: all 0.15s; }
 #postit-toggle:hover { transform: scale(1.08); }
@@ -252,7 +252,7 @@ body { font-family: 'Sunchon', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 .todo-panel.open { right: 0; }
 .todo-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1.5px solid var(--border); font-size: 14px; font-weight: 600; background: var(--surface); flex-shrink: 0; font-family: 'ONE-Mobile-Title', sans-serif; }
 .todo-panel-quick { padding: 12px 16px; border-bottom: 1.5px solid var(--border); background: var(--surface2); flex-shrink: 0; }
-.todo-panel-quick input { width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; font-size: 13px; background: var(--surface); color: var(--text); outline: none; font-family: 'Sunchon', sans-serif; }
+.todo-panel-quick input { width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; font-size: 13px; background: var(--surface); color: var(--text); outline: none; font-family: 'OngleipKonkon', sans-serif; }
 .todo-panel-quick input:focus { border-color: var(--accent); }
 .todo-panel-body { flex: 1; overflow-y: auto; padding: 8px 16px; }
 
@@ -262,9 +262,9 @@ body { font-family: 'Sunchon', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 .todo-add-quick-btn:hover { transform: scale(1.1); opacity: 0.9; }
 .todo-quick-input { margin-bottom: 8px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; animation: slideDown 0.15s ease; }
 @keyframes slideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
-.todo-quick-input input { width: 100%; border: none; background: transparent; font-size: 12px; color: var(--text); outline: none; font-family: 'Sunchon', sans-serif; }
+.todo-quick-input input { width: 100%; border: none; background: transparent; font-size: 12px; color: var(--text); outline: none; font-family: 'OngleipKonkon', sans-serif; }
 .todo-input-actions { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
-.todo-select { flex: 1; font-size: 11px; padding: 3px 6px; border: 1px solid var(--border); border-radius: var(--radius-xs); background: var(--surface); color: var(--text); font-family: 'Sunchon', sans-serif; }
+.todo-select { flex: 1; font-size: 11px; padding: 3px 6px; border: 1px solid var(--border); border-radius: var(--radius-xs); background: var(--surface); color: var(--text); font-family: 'OngleipKonkon', sans-serif; }
 .todo-detail-btn { background: none; border: none; cursor: pointer; font-size: 14px; padding: 2px; }
 .todo-item { display: flex; align-items: flex-start; gap: 8px; padding: 7px 2px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; border-radius: var(--radius-xs); }
 .todo-item:last-child { border-bottom: none; }
@@ -281,14 +281,14 @@ body { font-family: 'Sunchon', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 .todo-text.done { text-decoration: line-through; color: var(--text-hint); }
 .todo-due-label { font-size: 10px; color: var(--text-hint); margin-top: 1px; }
 .todo-due-label.overdue { color: #e05555; font-weight: 600; }
-.todo-completed-toggle { width: 100%; background: none; border: none; cursor: pointer; font-size: 11px; color: var(--text-hint); padding: 6px 0 2px; text-align: left; font-family: 'Sunchon', sans-serif; display: flex; align-items: center; gap: 4px; }
+.todo-completed-toggle { width: 100%; background: none; border: none; cursor: pointer; font-size: 11px; color: var(--text-hint); padding: 6px 0 2px; text-align: left; font-family: 'OngleipKonkon', sans-serif; display: flex; align-items: center; gap: 4px; }
 .todo-completed-toggle:hover { color: var(--text-sub); }
 
 /* 테마 */
 .theme-panel { padding: 12px 14px; border-top: 1px solid var(--border); }
 .theme-panel-title { font-size: 11px; font-weight: 700; color: var(--text-hint); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
 .theme-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.theme-row label { font-size: 12px; color: var(--text-sub); font-family: 'Sunchon', sans-serif; }
+.theme-row label { font-size: 12px; color: var(--text-sub); font-family: 'OngleipKonkon', sans-serif; }
 .dark-toggle { width: 36px; height: 20px; background: var(--border); border-radius: 10px; border: none; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
 .dark-toggle.on { background: var(--accent); }
 .dark-toggle::after { content: ''; position: absolute; width: 14px; height: 14px; background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: left 0.2s; }
@@ -410,6 +410,17 @@ body { font-family: 'Sunchon', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
           </svg>
         </button>
         <div class="profile-menu" id="profile-menu">
+          <!-- 프로필 이미지 설정 -->
+          <div class="profile-img-section">
+            <div class="profile-img-preview" id="profile-img-preview-pc">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            </div>
+            <div class="profile-img-actions">
+              <label class="profile-img-btn" for="profile-img-input-pc">📷 이미지 설정</label>
+              <input type="file" id="profile-img-input-pc" accept="image/*" onchange="setProfileImage(this)">
+              <button class="profile-img-btn danger" id="profile-img-remove-pc" onclick="removeProfileImage()" style="display:none">🗑 이미지 제거</button>
+            </div>
+          </div>
           <div id="profile-menu-accounts"></div>
           <div class="profile-menu-divider"></div>
           <button class="profile-menu-item" onclick="addAccount()">➕ 계정 추가</button>
@@ -457,6 +468,16 @@ body { font-family: 'Sunchon', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
         </button>
         <div class="profile-menu" id="profile-menu-mobile" style="right:0;top:calc(100% + 8px)">
+            <div class="profile-img-section">
+              <div class="profile-img-preview" id="profile-img-preview-mob">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+              </div>
+              <div class="profile-img-actions">
+                <label class="profile-img-btn" for="profile-img-input-mob">📷 이미지 설정</label>
+                <input type="file" id="profile-img-input-mob" accept="image/*" onchange="setProfileImage(this)">
+                <button class="profile-img-btn danger" id="profile-img-remove-mob" onclick="removeProfileImage()" style="display:none">🗑 이미지 제거</button>
+              </div>
+            </div>
           <div id="profile-menu-accounts-mobile"></div>
           <div class="profile-menu-divider"></div>
           <button class="profile-menu-item" onclick="addAccount()">➕ 계정 추가</button>
@@ -1081,6 +1102,7 @@ function toggleProfileMenu() {
     menu.classList.add('open');
     updateProfileMenu();
     renderPresetColors();
+    applyProfileImage();
     const tog = document.getElementById('dark-toggle-pc');
     if (tog) tog.classList.toggle('on', isDark);
   }
@@ -1326,6 +1348,150 @@ function reconnectAll() {
   reconnectNext(0);
 }
 
+// ── 프로필 이미지 ──
+let profileImageData = localStorage.getItem('profile_image') || null;
+const PROFILE_FILENAME = 'memo_calendar_profile.json';
+let profileDriveFileId = localStorage.getItem('drive_profile_file_id') || null;
+
+async function saveProfileToDrive(imageData) {
+  const token = await getDriveToken();
+  if (!token) return;
+  const data = JSON.stringify({ image: imageData });
+  try {
+    if (profileDriveFileId) {
+      const r = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${profileDriveFileId}?uploadType=media`,
+        { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: data }
+      );
+      if (!r.ok) {
+        profileDriveFileId = null;
+        localStorage.removeItem('drive_profile_file_id');
+        await saveProfileToDrive(imageData);
+      }
+    } else {
+      const meta = await fetch('https://www.googleapis.com/drive/v3/files', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: PROFILE_FILENAME, parents: ['appDataFolder'] })
+      }).then(r => r.json());
+      if (!meta.id) return;
+      profileDriveFileId = meta.id;
+      localStorage.setItem('drive_profile_file_id', profileDriveFileId);
+      await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${profileDriveFileId}?uploadType=media`,
+        { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: data }
+      );
+    }
+    console.log('프로필 이미지 드라이브 저장 완료');
+  } catch(e) { console.error('프로필 드라이브 저장 실패:', e); }
+}
+
+async function loadProfileFromDrive() {
+  const token = await getDriveToken();
+  if (!token) return;
+  try {
+    const list = await fetch(
+      `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='${PROFILE_FILENAME}'&fields=files(id,name)`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    ).then(r => r.json());
+    if (!list.files || !list.files.length) return;
+    profileDriveFileId = list.files[0].id;
+    localStorage.setItem('drive_profile_file_id', profileDriveFileId);
+    const data = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${profileDriveFileId}?alt=media`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    ).then(r => r.json());
+    if (data && data.image) {
+      profileImageData = data.image;
+      localStorage.setItem('profile_image', profileImageData);
+      applyProfileImage();
+      console.log('프로필 이미지 드라이브 불러오기 완료');
+    }
+  } catch(e) { console.error('프로필 드라이브 불러오기 실패:', e); }
+}
+
+function applyProfileImage() {
+  const btns = document.querySelectorAll('.profile-btn');
+  const previews = document.querySelectorAll('.profile-img-preview');
+  const removeBtns = document.querySelectorAll('[id^="profile-img-remove"]');
+
+  if (profileImageData) {
+    // 프로필 버튼에 이미지 적용
+    btns.forEach(btn => {
+      btn.style.background = 'none';
+      btn.innerHTML = `<img src="${profileImageData}" alt="프로필">`;
+    });
+    // 미리보기에 이미지 적용
+    previews.forEach(p => {
+      p.innerHTML = `<img src="${profileImageData}" alt="프로필">`;
+    });
+    // 제거 버튼 표시
+    removeBtns.forEach(b => b.style.display = 'block');
+  } else {
+    // 기본 아이콘으로 복원
+    const svgIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>`;
+    const previewSvg = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>`;
+    btns.forEach(btn => {
+      btn.style.background = '';
+      btn.innerHTML = svgIcon;
+    });
+    previews.forEach(p => { p.innerHTML = previewSvg; });
+    removeBtns.forEach(b => b.style.display = 'none');
+  }
+}
+
+function setProfileImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  // 크기 제한: 2MB
+  if (file.size > 2 * 1024 * 1024) {
+    alert('이미지 크기는 2MB 이하로 설정해주세요.');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    // 이미지 리사이즈 (100x100으로 줄여서 저장)
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 100; canvas.height = 100;
+      const ctx = canvas.getContext('2d');
+      // 중앙 크롭
+      const size = Math.min(img.width, img.height);
+      const sx = (img.width - size) / 2;
+      const sy = (img.height - size) / 2;
+      ctx.drawImage(img, sx, sy, size, size, 0, 0, 100, 100);
+      profileImageData = canvas.toDataURL('image/jpeg', 0.8);
+      localStorage.setItem('profile_image', profileImageData);
+      applyProfileImage();
+      saveProfileToDrive(profileImageData); // 드라이브 동기화
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  // input 초기화 (같은 파일 재선택 가능하게)
+  input.value = '';
+}
+
+function removeProfileImage() {
+  if (!confirm('프로필 이미지를 제거할까요?')) return;
+  profileImageData = null;
+  localStorage.removeItem('profile_image');
+  applyProfileImage();
+  // 드라이브에서도 삭제
+  if (profileDriveFileId) {
+    getDriveToken().then(token => {
+      if (!token) return;
+      fetch(`https://www.googleapis.com/drive/v3/files/${profileDriveFileId}`,
+        { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }
+      ).then(() => {
+        profileDriveFileId = null;
+        localStorage.removeItem('drive_profile_file_id');
+      });
+    });
+  }
+}
+
 function closeProfileMenu() {
   const m1 = document.getElementById('profile-menu');
   const m2 = document.getElementById('profile-menu-mobile');
@@ -1375,6 +1541,7 @@ function showApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   initTheme();
+  applyProfileImage();
   render();
   renderAllPostits();
   // 자동 토큰 갱신 시작 (45분 주기)
@@ -1387,6 +1554,7 @@ function showApp() {
     else await loadMemosFromDrive();
     if (offlineQueue.todos) await saveTodosToDrive();
     else await loadTodosFromDrive();
+    await loadProfileFromDrive();
   }, 2000);
 }
 
@@ -1423,6 +1591,7 @@ if (accounts.length > 0) {
                 else await loadMemosFromDrive();
                 if (offlineQueue.todos) await saveTodosToDrive();
                 else await loadTodosFromDrive();
+                await loadProfileFromDrive();
               }
             } else {
               // silent 갱신 실패 - 기존 토큰 없으면 배너만 표시
