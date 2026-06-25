@@ -824,10 +824,7 @@ try {
     token: windowTokens[a.type] || savedTokens[a.type] || null
   }));
 } catch(e) {}
-// 구글 이벤트는 항상 새로 불러옴 (삭제 반영을 위해 로컬 캐시 사용 안 함)
-// 로컬 저장 이벤트(source !== 'google')만 유지
-let events = JSON.parse(localStorage.getItem('cal_events') || '[]')
-  .filter(e => e.source !== 'google');
+let events = JSON.parse(localStorage.getItem('cal_events') || '[]');
 let memos = JSON.parse(localStorage.getItem('cal_memos') || '[]');
 let activeAccounts = JSON.parse(localStorage.getItem('cal_active') || '["personal","work"]');
 let currentView = 'month';
@@ -1417,14 +1414,6 @@ function reconnectAll() {
               const tokensOnly = accounts.reduce((obj, a) => { if(a.token) obj[a.type]=a.token; return obj; }, {});
               try { sessionStorage.setItem('cal_tokens', JSON.stringify(tokensOnly)); } catch(e) {}
               window._calTokens = tokensOnly;
-              // 구글 재연결 시 해당 계정 로컬 캐시 제거 후 새로 불러오기
-              events = events.filter(e => {
-                if (e.source !== 'google') return true;
-                if (e.account === acc.type) return false;
-                if (e.account === 'holiday' && acc.type === 'personal') return false;
-                return true;
-              });
-              save();
               fetchCalendarEvents(acc.type, resp.access_token);
               if (acc.type === 'personal') {
                 setTimeout(() => { loadMemosFromDrive(); loadTodosFromDrive(); }, 500);
@@ -1833,14 +1822,6 @@ if (accounts.length > 0) {
               try { sessionStorage.setItem('cal_tokens', JSON.stringify(tokensOnly)); } catch(e) {}
               window._calTokens = tokensOnly;
               hideTokenBanner();
-              // 재연결 시 해당 계정 캐시 제거 후 새로 불러오기
-              events = events.filter(e => {
-                if (e.source !== 'google') return true;
-                if (e.account === acc.type) return false;
-                if (e.account === 'holiday' && acc.type === 'personal') return false;
-                return true;
-              });
-              save();
               fetchCalendarEvents(acc.type, resp.access_token);
               scheduleTokenRefresh(acc.type, acc.email, 45 * 60 * 1000);
               // 개인 계정 토큰으로 드라이브 동기화
