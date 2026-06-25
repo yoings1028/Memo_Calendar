@@ -824,7 +824,10 @@ try {
     token: windowTokens[a.type] || savedTokens[a.type] || null
   }));
 } catch(e) {}
-let events = JSON.parse(localStorage.getItem('cal_events') || '[]');
+// 구글 이벤트는 항상 새로 불러옴 (삭제 반영을 위해 로컬 캐시 사용 안 함)
+// 로컬 저장 이벤트(source !== 'google')만 유지
+let events = JSON.parse(localStorage.getItem('cal_events') || '[]')
+  .filter(e => e.source !== 'google');
 let memos = JSON.parse(localStorage.getItem('cal_memos') || '[]');
 let activeAccounts = JSON.parse(localStorage.getItem('cal_active') || '["personal","work"]');
 let currentView = 'month';
@@ -1414,6 +1417,14 @@ function reconnectAll() {
               const tokensOnly = accounts.reduce((obj, a) => { if(a.token) obj[a.type]=a.token; return obj; }, {});
               try { sessionStorage.setItem('cal_tokens', JSON.stringify(tokensOnly)); } catch(e) {}
               window._calTokens = tokensOnly;
+              // 구글 재연결 시 해당 계정 로컬 캐시 제거 후 새로 불러오기
+              events = events.filter(e => {
+                if (e.source !== 'google') return true;
+                if (e.account === acc.type) return false;
+                if (e.account === 'holiday' && acc.type === 'personal') return false;
+                return true;
+              });
+              save();
               fetchCalendarEvents(acc.type, resp.access_token);
               if (acc.type === 'personal') {
                 setTimeout(() => { loadMemosFromDrive(); loadTodosFromDrive(); }, 500);
@@ -1822,6 +1833,14 @@ if (accounts.length > 0) {
               try { sessionStorage.setItem('cal_tokens', JSON.stringify(tokensOnly)); } catch(e) {}
               window._calTokens = tokensOnly;
               hideTokenBanner();
+              // 재연결 시 해당 계정 캐시 제거 후 새로 불러오기
+              events = events.filter(e => {
+                if (e.source !== 'google') return true;
+                if (e.account === acc.type) return false;
+                if (e.account === 'holiday' && acc.type === 'personal') return false;
+                return true;
+              });
+              save();
               fetchCalendarEvents(acc.type, resp.access_token);
               scheduleTokenRefresh(acc.type, acc.email, 45 * 60 * 1000);
               // 개인 계정 토큰으로 드라이브 동기화
@@ -2241,21 +2260,33 @@ function getToken(accountType) {
 // 구글 캘린더에 일정 저장 (신규)
 async function saveToGoogle(ev) {
   const token = getToken(ev.account);
-  if (!token) return null;
+  if (!token) {
+    console.error('saveToGoogle: 토큰 없음 - 계정:', ev.account, '/ 저장된 계정:', accounts.map(a=>a.type+'(token:'+!!a.token+')'));
+    showTokenBanner();
+    return null;
+  }
   const body = buildGoogleEventBody(ev);
+  console.log('구글 저장 시도:', ev.title, '/ 계정:', ev.account);
   const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
-  if (!res.ok) { console.error('구글 저장 실패', await res.text()); return null; }
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error('구글 저장 실패', res.status, errText);
+    if (res.status === 401) showTokenBanner();
+    return null;
+  }
   const data = await res.json();
+  console.log('구글 저장 성공:', data.id);
   return data.id;
 }
 
 // 구글 캘린더 일정 수정
 async function updateToGoogle(ev) {
   const token = getToken(ev.account);
+  if (!token) { console.error('updateToGoogle: 토큰 없음'); showTokenBanner(); return; }
   if (!token || !ev.googleId) return;
   const body = buildGoogleEventBody(ev);
   const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${ev.googleId}`, {
