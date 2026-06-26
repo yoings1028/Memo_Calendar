@@ -28,7 +28,7 @@
 }
 @font-face {
   font-family: 'SUIT';
-  src: url('https://cdn.jsdelivr.net/gh/sun-typeface/SUITSANS@1/fonts/variable/woff2/SUIT-Variable.woff2') format('woff2');
+  src: url('https://cdn.jsdelivr.net/gh/sun-typeface/SUITSANS@2/fonts/variable/woff2/SUIT-Variable.woff2') format('woff2');
   font-weight: 100 900;
   font-display: swap;
 }
@@ -837,6 +837,9 @@ let postitPositions = JSON.parse(localStorage.getItem('postit_pos') || '{}');
 let allHidden = false;
 let todos = JSON.parse(localStorage.getItem('cal_todos') || '[]');
 let offlineQueue = JSON.parse(localStorage.getItem('offline_queue') || '{"memos":false,"todos":false}');
+let showCompleted = false;
+let showPanelCompleted = false;
+let editingTodoId = null;
 
 const today = new Date();
 const todayStr = fmtDate(today);
@@ -1778,14 +1781,16 @@ function showApp() {
   initTheme();
   applyProfileImage();
 
-  // GIS 내부 팝업/iframe 완전 차단
+  // GIS 팝업 창을 화면 밖으로 숨겨서 열기 (차단X - 토큰 갱신 필요)
   const _origOpen = window.open;
-  window.open = function(url, ...args) {
+  window.open = function(url, name, features) {
     if (url && typeof url === 'string' && url.includes('accounts.google.com')) {
-      console.log('GIS 팝업 차단:', url.slice(0, 60));
-      return null;
+      // 화면 밖에 숨겨서 열기 (닫히는 동안 안 보임)
+      const hiddenFeatures = 'width=1,height=1,top=-100,left=-100,toolbar=no,menubar=no,scrollbars=no,resizable=no';
+      const win = _origOpen.call(this, url, name, hiddenFeatures);
+      return win;
     }
-    return _origOpen.apply(this, [url, ...args]);
+    return _origOpen.apply(this, [url, name, features]);
   };
 
   // DOM에 추가되는 GIS 요소 즉시 숨기기
@@ -2591,9 +2596,6 @@ function startDragTouch(e, id) {
 }
 
 // ── 투두리스트 로직 ──
-let editingTodoId = null;
-let showCompleted = false;
-let showPanelCompleted = false;
 
 function focusTodoInput() {
   const el = document.getElementById('todo-quick-input');
