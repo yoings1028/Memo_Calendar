@@ -1396,10 +1396,9 @@ function hideTokenBanner() {
 }
 
 function reconnectAll() {
-  // 모든 계정 순서대로 재연결
   const toReconnect = [...accounts];
   hideTokenBanner();
-  function reconnectNext(i) {
+  function reconnectNext(i, forcePrompt) {
     if (i >= toReconnect.length) return;
     const acc = toReconnect[i];
     loadGoogleScript(() => {
@@ -1408,25 +1407,43 @@ function reconnectAll() {
           client_id: CLIENT_ID,
           scope: SCOPES,
           hint: acc.email,
+          error_callback: (err) => {
+            if (!forcePrompt && (err.type === 'popup_failed_to_open' || err.type === 'user_logged_out')) {
+              // silent 실패 → 팝업으로 재시도
+              reconnectNext(i, true);
+            } else {
+              console.warn('재연결 실패:', err.type);
+              reconnectNext(i + 1, false);
+            }
+          },
           callback: (resp) => {
             if (!resp.error && resp.access_token) {
               acc.token = resp.access_token;
               const tokensOnly = accounts.reduce((obj, a) => { if(a.token) obj[a.type]=a.token; return obj; }, {});
               try { sessionStorage.setItem('cal_tokens', JSON.stringify(tokensOnly)); } catch(e) {}
               window._calTokens = tokensOnly;
+              hideTokenBanner();
               fetchCalendarEvents(acc.type, resp.access_token);
+              scheduleTokenRefresh(acc.type, acc.email, 45 * 60 * 1000);
               if (acc.type === 'personal') {
-                setTimeout(() => { loadMemosFromDrive(); loadTodosFromDrive(); }, 500);
+                setTimeout(async () => {
+                  if (offlineQueue.memos) await saveMemosToDrive();
+                  else await loadMemosFromDrive();
+                  if (offlineQueue.todos) await saveTodosToDrive();
+                  else await loadTodosFromDrive();
+                  await loadProfileFromDrive();
+                }, 500);
               }
             }
-            reconnectNext(i + 1);
+            reconnectNext(i + 1, false);
           }
         });
-        tc.requestAccessToken({ prompt: 'select_account' });
-      } catch(e) { reconnectNext(i + 1); }
+        // 먼저 팝업 없이 시도, 실패하면 error_callback에서 팝업으로 재시도
+        tc.requestAccessToken({ prompt: forcePrompt ? 'select_account' : 'none' });
+      } catch(e) { reconnectNext(i + 1, false); }
     });
   }
-  reconnectNext(0);
+  reconnectNext(0, false);
 }
 
 // ── 프로필 이미지 ──
