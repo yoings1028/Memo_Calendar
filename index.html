@@ -1778,26 +1778,55 @@ function showApp() {
   initTheme();
   applyProfileImage();
 
-  // GIS가 동적으로 추가하는 팝업 요소 즉시 숨기기
+  // GIS 내부 팝업/iframe 완전 차단
+  const _origOpen = window.open;
+  window.open = function(url, ...args) {
+    if (url && typeof url === 'string' && url.includes('accounts.google.com')) {
+      console.log('GIS 팝업 차단:', url.slice(0, 60));
+      return null;
+    }
+    return _origOpen.apply(this, [url, ...args]);
+  };
+
+  // DOM에 추가되는 GIS 요소 즉시 숨기기
+  const _hideGis = (node) => {
+    if (!node || node.nodeType !== 1) return;
+    const id = node.id || '';
+    const tag = node.tagName || '';
+    const src = node.src || node.getAttribute?.('src') || '';
+    if (
+      id.startsWith('gsi_') || id.startsWith('g_a_') ||
+      id.includes('credential_picker') ||
+      id.includes('google') ||
+      (tag === 'IFRAME' && src.includes('accounts.google.com'))
+    ) {
+      node.style.cssText = 'display:none!important;visibility:hidden!important;opacity:0!important;position:fixed!important;top:-9999px!important;left:-9999px!important;width:0!important;height:0!important;pointer-events:none!important';
+      node.setAttribute('aria-hidden', 'true');
+    }
+    // 자식도 확인
+    node.querySelectorAll?.('iframe[src*="accounts.google.com"]')
+      .forEach(_hideGis);
+  };
+
   const gisObserver = new MutationObserver((mutations) => {
-    mutations.forEach(m => {
-      m.addedNodes.forEach(node => {
-        if (node.nodeType !== 1) return;
-        const id = node.id || '';
-        const cls = node.className || '';
-        if (
-          id.startsWith('gsi_') || id.startsWith('g_a_') ||
-          id.includes('credential_picker') ||
-          id.includes('google-sign-in') ||
-          cls.includes('google-sign-in') ||
-          (node.tagName === 'IFRAME' && (node.src || '').includes('accounts.google.com'))
-        ) {
-          node.style.cssText = 'display:none!important;visibility:hidden!important;opacity:0!important;position:fixed!important;top:-9999px!important;left:-9999px!important;width:0!important;height:0!important';
-        }
-      });
-    });
+    for (const m of mutations) {
+      for (const node of m.addedNodes) {
+        _hideGis(node);
+      }
+      // 속성 변경으로 src가 바뀌는 경우도 처리
+      if (m.type === 'attributes' && m.attributeName === 'src') {
+        _hideGis(m.target);
+      }
+    }
   });
-  gisObserver.observe(document.body, { childList: true, subtree: true });
+  gisObserver.observe(document.body, {
+    childList: true, subtree: true, attributes: true,
+    attributeFilter: ['src', 'style']
+  });
+
+  // 이미 존재하는 GIS 요소 즉시 처리
+  document.querySelectorAll('iframe[src*="accounts.google.com"], [id^="gsi_"], [id^="g_a_"]')
+    .forEach(_hideGis);
 
   render();
   renderAllPostits();
