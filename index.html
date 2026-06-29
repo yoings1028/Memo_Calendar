@@ -824,7 +824,9 @@ try {
     token: windowTokens[a.type] || savedTokens[a.type] || null
   }));
 } catch(e) {}
-let events = JSON.parse(localStorage.getItem('cal_events') || '[]');
+// 구글 이벤트는 항상 구글에서 새로 불러옴 (삭제 반영 보장)
+let events = JSON.parse(localStorage.getItem('cal_events') || '[]')
+  .filter(e => e.source !== 'google');
 let memos = JSON.parse(localStorage.getItem('cal_memos') || '[]');
 let activeAccounts = JSON.parse(localStorage.getItem('cal_active') || '["personal","work"]');
 let currentView = 'month';
@@ -1021,7 +1023,8 @@ function save() {
   try { sessionStorage.setItem('cal_tokens', JSON.stringify(tokensOnly)); } catch(e) {}
   window._calTokens = tokensOnly;
   localStorage.setItem('offline_queue', JSON.stringify(offlineQueue));
-  localStorage.setItem('cal_events', JSON.stringify(events));
+  // 구글 이벤트는 캐시 안 함 (삭제 반영 보장 위해)
+  localStorage.setItem('cal_events', JSON.stringify(events.filter(e => e.source !== 'google')));
   localStorage.setItem('cal_memos', JSON.stringify(memos));
   localStorage.setItem('cal_todos', JSON.stringify(todos));
   localStorage.setItem('cal_active', JSON.stringify(activeAccounts));
