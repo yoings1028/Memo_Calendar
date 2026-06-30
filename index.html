@@ -1781,19 +1781,8 @@ function showApp() {
   initTheme();
   applyProfileImage();
 
-  // GIS 팝업 창을 화면 밖으로 숨겨서 열기 (차단X - 토큰 갱신 필요)
-  const _origOpen = window.open;
-  window.open = function(url, name, features) {
-    if (url && typeof url === 'string' && url.includes('accounts.google.com')) {
-      // 화면 밖에 숨겨서 열기 (닫히는 동안 안 보임)
-      const hiddenFeatures = 'width=1,height=1,top=-100,left=-100,toolbar=no,menubar=no,scrollbars=no,resizable=no';
-      const win = _origOpen.call(this, url, name, hiddenFeatures);
-      return win;
-    }
-    return _origOpen.apply(this, [url, name, features]);
-  };
-
-  // DOM에 추가되는 GIS 요소 즉시 숨기기
+  // window.open은 정상 동작하도록 둠 (숨기면 GIS가 popup_closed로 오인하여 인증 실패)
+  // 대신 DOM에 추가되는 GIS 관련 요소만 숨김 처리
   const _hideGis = (node) => {
     if (!node || node.nodeType !== 1) return;
     const id = node.id || '';
